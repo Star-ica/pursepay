@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PursePay — Seller Payment Platform</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy:#0F1729; --navy-2:#1A2540; --navy-3:#243055;
+    --indigo:#6366F1; --indigo-light:#818CF8; --indigo-dim:rgba(99,102,241,0.12);
+    --mint:#10B981; --mint-dim:rgba(16,185,129,0.12);
+    --amber:#F59E0B; --red:#EF4444;
+    --slate:#94A3B8; --slate-2:#64748B;
+    --white:#FFFFFF; --card:#162035;
+    --border:rgba(148,163,184,0.1); --border-active:rgba(99,102,241,0.4);
+  }
+  html,body { min-height:100vh; background:var(--navy); color:var(--white); font-family:'Inter',system-ui,sans-serif; font-size:15px; line-height:1.5; }
+  .app { display:flex; flex-direction:column; min-height:100vh; }
+
+  /* HEADER */
+  header { display:flex; align-items:center; justify-content:space-between; padding:18px 32px; border-bottom:1px solid var(--border); background:var(--navy); position:sticky; top:0; z-index:100; gap:12px; flex-wrap:wrap; }
+  .logo { display:flex; align-items:center; gap:10px; font-weight:700; font-size:18px; letter-spacing:-0.3px; }
+  .logo-icon { width:34px; height:34px; background:var(--indigo); border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:16px; }
+  nav { display:flex; gap:6px; flex-wrap:wrap; }
+  nav button { background:none; border:none; color:var(--slate); font:500 13px/1 'Inter',sans-serif; padding:7px 14px; border-radius:7px; cursor:pointer; transition:all .15s; }
+  nav button:hover { color:var(--white); background:var(--navy-2); }
+  nav button.active { color:var(--white); background:var(--navy-3); }
+
+  /* WALLET BAR */
+  .wallet-bar { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+  .wallet-pill { display:flex; align-items:center; gap:8px; background:var(--navy-2); border:1px solid var(--border); border-radius:20px; padding:6px 14px; font-size:13px; font-weight:500; }
+  .wallet-dot { width:8px; height:8px; border-radius:50%; background:var(--mint); flex-shrink:0; }
+  .wallet-dot.disconnected { background:var(--slate); }
+  #chain-badge { font-size:11px; padding:2px 8px; border-radius:10px; font-weight:600; }
+  .chain-ok { background:var(--mint-dim); color:var(--mint); }
+  .chain-wrong { background:rgba(239,68,68,.12); color:var(--red); }
+
+  /* MAIN */
+  main { flex:1; padding:40px 32px; max-width:1100px; margin:0 auto; width:100%; }
+  .screen { display:none; animation:fadeIn .2s ease; }
+  .screen.active { display:block; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+
+  /* BUTTONS */
+  .btn { display:inline-flex; align-items:center; gap:8px; padding:13px 26px; border-radius:10px; font:600 15px/1 'Inter',sans-serif; cursor:pointer; border:none; transition:all .15s; }
+  .btn-primary { background:var(--indigo); color:#fff; }
+  .btn-primary:hover { background:#5254CC; transform:translateY(-1px); box-shadow:0 6px 20px rgba(99,102,241,.35); }
+  .btn-primary:disabled { opacity:.5; cursor:not-allowed; transform:none; box-shadow:none; }
+  .btn-ghost { background:var(--navy-2); color:var(--white); border:1px solid var(--border); }
+  .btn-ghost:hover { background:var(--navy-3); }
+  .btn-sm { padding:8px 16px; font-size:13px; border-radius:7px; }
+  .btn-danger { background:rgba(239,68,68,.12); color:var(--red); border:1px solid rgba(239,68,68,.2); }
+  .btn-danger:hover { background:rgba(239,68,68,.2); }
+  .btn-success { background:var(--mint); color:#fff; }
+  .btn-success:hover { background:#0DA571; }
+  .btn-success:disabled { opacity:.5; cursor:not-allowed; }
+  .btn-amber { background:rgba(245,158,11,.12); color:var(--amber); border:1px solid rgba(245,158,11,.2); }
+
+  /* LANDING */
+  .landing-hero { text-align:center; padding:60px 20px 48px; }
+  .landing-hero h1 { font-size:clamp(32px,5vw,52px); font-weight:800; letter-spacing:-1.5px; line-height:1.1; margin-bottom:16px; }
+  .landing-hero h1 span { color:var(--indigo-light); }
+  .landing-hero p { color:var(--slate); font-size:17px; max-width:460px; margin:0 auto 36px; }
+  .features { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; margin-top:48px; }
+  .feature-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:24px; }
+  .feature-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px; margin-bottom:14px; }
+  .feature-card h3 { font-size:15px; font-weight:600; margin-bottom:6px; }
+  .feature-card p { font-size:13px; color:var(--slate); line-height:1.6; }
+
+  /* FORMS */
+  .create-container { max-width:520px; margin:0 auto; }
+  .page-title { font-size:24px; font-weight:700; letter-spacing:-0.5px; margin-bottom:6px; }
+  .page-sub { color:var(--slate); font-size:14px; margin-bottom:32px; }
+  .form-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:28px; }
+  .field { margin-bottom:20px; }
+  .field label { display:block; font-size:13px; font-weight:500; color:var(--slate); margin-bottom:7px; }
+  .field input,.field select,.field textarea { width:100%; background:var(--navy-2); border:1px solid var(--border); border-radius:9px; padding:11px 14px; color:var(--white); font:15px 'Inter',sans-serif; outline:none; transition:border-color .15s; }
+  .field input:focus,.field select:focus,.field textarea:focus { border-color:var(--indigo); box-shadow:0 0 0 3px rgba(99,102,241,.12); }
+  .field input::placeholder,.field textarea::placeholder { color:var(--slate-2); }
+  .field select option { background:var(--navy-2); }
+  .field textarea { resize:vertical; min-height:80px; }
+  .amount-row { display:grid; grid-template-columns:1fr 140px; gap:10px; }
+  .currency-symbol { position:relative; }
+  .currency-symbol input { padding-left:34px; }
+  .currency-symbol::before { content:attr(data-symbol); position:absolute; left:13px; top:50%; transform:translateY(-50%); color:var(--slate); font-weight:500; font-size:15px; pointer-events:none; }
+  .hint { font-size:12px; color:var(--slate-2); margin-top:5px; }
+
+  /* DASHBOARD */
+  .dash-header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:28px; flex-wrap:wrap; }
+  .purse-list { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:16px; }
+  .purse-card { background:var(--card); border:1px solid var(--border); border-radius:16px; overflow:hidden; transition:border-color .2s; }
+  .purse-card:hover { border-color:var(--border-active); }
+  .purse-card-header { padding:20px 20px 16px; border-bottom:1px solid var(--border); }
+  .purse-name { font-weight:600; font-size:16px; margin-bottom:4px; }
+  .purse-desc { font-size:13px; color:var(--slate); }
+  .purse-card-body { padding:20px; }
+  .price-display { display:flex; align-items:baseline; gap:6px; margin-bottom:16px; }
+  .price-amount { font-size:32px; font-weight:800; letter-spacing:-1px; line-height:1; }
+  .price-currency { font-size:15px; color:var(--slate); font-weight:500; }
+  .price-edit-row { display:flex; gap:8px; margin-bottom:16px; align-items:center; }
+  .price-edit-row input { flex:1; background:var(--navy-2); border:1px solid var(--indigo); border-radius:8px; padding:8px 12px; color:var(--white); font:15px 'Inter',sans-serif; outline:none; box-shadow:0 0 0 3px rgba(99,102,241,.1); }
+  .purse-actions { display:flex; gap:8px; flex-wrap:wrap; }
+
+  /* BADGES */
+  .badge { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; }
+  .badge-active { background:var(--mint-dim); color:var(--mint); }
+  .badge-onchain { background:var(--indigo-dim); color:var(--indigo-light); }
+  .badge-local { background:rgba(245,158,11,.12); color:var(--amber); }
+  .badge-id { background:var(--indigo-dim); color:var(--indigo-light); font-family:monospace; font-size:10px; text-transform:none; letter-spacing:0; }
+  .tag-row { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+
+  /* EMPTY */
+  .empty-state { text-align:center; padding:64px 32px; color:var(--slate); grid-column:1/-1; }
+  .empty-icon { font-size:48px; margin-bottom:16px; }
+  .empty-state h3 { font-size:18px; font-weight:600; color:var(--white); margin-bottom:8px; }
+  .empty-state p { font-size:14px; margin-bottom:24px; }
+
+  /* QR MODAL */
+  .modal-overlay { position:fixed; inset:0; z-index:200; background:rgba(15,23,41,0.88); backdrop-filter:blur(6px); display:none; align-items:center; justify-content:center; padding:20px; }
+  .modal-overlay.open { display:flex; }
+  .modal { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:32px; width:100%; max-width:440px; position:relative; animation:modalIn .2s ease; max-height:90vh; overflow-y:auto; }
+  @keyframes modalIn { from{opacity:0;transform:scale(.96)} to{opacity:1;transform:none} }
+  .modal-close { position:absolute; top:16px; right:16px; background:var(--navy-2); border:1px solid var(--border); color:var(--slate); font-size:18px; width:32px; height:32px; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .15s; }
+  .modal-close:hover { color:var(--white); background:var(--navy-3); }
+  .modal-title { font-size:20px; font-weight:700; margin-bottom:4px; }
+  .modal-sub { font-size:13px; color:var(--slate); margin-bottom:24px; }
+  .qr-container { background:#fff; border-radius:14px; padding:20px; display:flex; align-items:center; justify-content:center; margin-bottom:20px; }
+  #qr-canvas { display:block; border-radius:4px; }
+  .qr-info { display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
+  .qr-row { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:var(--navy-2); border-radius:9px; border:1px solid var(--border); gap:8px; }
+  .qr-row-label { font-size:12px; color:var(--slate); font-weight:500; flex-shrink:0; }
+  .qr-row-value { font-size:14px; font-weight:600; text-align:right; word-break:break-all; }
+  .qr-row-amount { color:var(--mint); font-size:18px; font-weight:800; }
+  .qr-note { font-size:12px; color:var(--slate); text-align:center; padding:10px 14px; background:var(--indigo-dim); border-radius:8px; border:1px solid rgba(99,102,241,.2); line-height:1.6; }
+  .modal-actions { display:flex; gap:10px; margin-top:16px; }
+  .modal-actions .btn { flex:1; justify-content:center; }
+
+  /* SCAN */
+  .scan-container { max-width:480px; margin:0 auto; }
+  .scan-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:28px; text-align:center; }
+  .scan-icon { font-size:48px; margin-bottom:16px; }
+
+  /* TX STATUS */
+  .tx-status { padding:12px 16px; border-radius:10px; font-size:13px; margin-top:12px; display:flex; align-items:flex-start; gap:10px; }
+  .tx-status.pending { background:rgba(245,158,11,.1); border:1px solid rgba(245,158,11,.2); color:var(--amber); }
+  .tx-status.success { background:var(--mint-dim); border:1px solid rgba(16,185,129,.2); color:var(--mint); }
+  .tx-status.error { background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.2); color:var(--red); }
+  .tx-link { color:inherit; text-decoration:underline; font-size:12px; word-break:break-all; }
+  .spinner { width:14px; height:14px; border:2px solid currentColor; border-top-color:transparent; border-radius:50%; animation:spin .7s linear infinite; flex-shrink:0; margin-top:1px; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+
+  /* TOAST */
+  .toast { position:fixed; bottom:24px; right:24px; background:var(--navy-3); border:1px solid var(--border); border-radius:10px; padding:12px 18px; font-size:14px; font-weight:500; display:flex; align-items:center; gap:10px; z-index:300; transform:translateY(20px); opacity:0; transition:all .25s; pointer-events:none; max-width:340px; }
+  .toast.show { transform:none; opacity:1; pointer-events:auto; }
+  .toast.success .toast-dot { background:var(--mint); }
+  .toast.error .toast-dot { background:var(--red); }
+  .toast-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+  .divider { height:1px; background:var(--border); margin:24px 0; }
+
+  /* APPROVAL ROW */
+  .approve-row { background:rgba(245,158,11,.07); border:1px solid rgba(245,158,11,.18); border-radius:10px; padding:14px 16px; margin-bottom:16px; font-size:13px; color:var(--amber); }
+  .approve-row p { margin-bottom:10px; }
+
+  @media(max-width:600px) {
+    header{padding:14px 16px;} main{padding:24px 16px;}
+    .amount-row{grid-template-columns:1fr;}
+    .wallet-bar{width:100%;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">
+      <div class="logo-icon">👝</div>
+      PursePay
+    </div>
+    <nav>
+      <button class="active" onclick="showScreen('landing',this)">Home</button>
+      <button onclick="showScreen('create',this)">Create Purse</button>
+      <button onclick="showScreen('dashboard',this)">My Purses</button>
+      <button onclick="showScreen('scan',this)">Scan & Pay</button>
+    </nav>
+    <div class="wallet-bar">
+      <div class="wallet-pill" id="wallet-pill">
+        <div class="wallet-dot disconnected" id="wallet-dot"></div>
+        <span id="wallet-label">Not connected</span>
+      </div>
+      <span id="chain-badge" class="chain-wrong" style="display:none"></span>
+      <button class="btn btn-primary btn-sm" id="connect-btn" onclick="connectWallet()">Connect Wallet</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- LANDING -->
+    <div class="screen active" id="screen-landing">
+      <div class="landing-hero">
+        <h1>Your payment<br><span>purse, instantly.</span></h1>
+        <p>Create an on-chain purse, set a price, share your QR. Buyers pay in BOT tokens — straight to your wallet.</p>
+        <button class="btn btn-primary" onclick="showScreen('create',document.querySelector('nav button:nth-child(2)'))">Create your first purse →</button>
+      </div>
+      <div class="features">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:var(--indigo-dim)">🔒</div>
+          <h3>Stable QR codes</h3>
+          <p>Update your price any time on-chain. Your QR code (the contract address) never changes.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:var(--mint-dim)">⛓</div>
+          <h3>On-chain via BOT Chain</h3>
+          <p>Each purse is a smart contract. Payments settle directly — no middlemen.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(245,158,11,.1)">📱</div>
+          <h3>Scan to pay</h3>
+          <p>Buyers scan your QR, see the live on-chain price, approve tokens, and confirm.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(239,68,68,.1)">💼</div>
+          <h3>Multiple purses</h3>
+          <p>Deploy as many purses as you need — one per product, service, or event.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CREATE -->
+    <div class="screen" id="screen-create">
+      <div class="create-container">
+        <div class="page-title">Create a Purse</div>
+        <div class="page-sub">Deploys a PurseWallet contract on BOT Chain. The contract address becomes your permanent QR code.</div>
+        <div class="form-card">
+          <div class="field">
+            <label>Purse name</label>
+            <input type="text" id="purse-name" placeholder="e.g. Fresh Tomatoes, Haircut, Website Design" maxlength="60">
+          </div>
+          <div class="field">
+            <label>Description <span style="color:var(--slate-2)">(optional)</span></label>
+            <textarea id="purse-desc" placeholder="What are you selling?"></textarea>
+          </div>
+          <div class="field">
+            <label>Price</label>
+            <div class="amount-row">
+              <div class="currency-symbol" data-symbol="">
+                <input type="number" id="purse-amount" placeholder="0.00" min="0" step="any">
+              </div>
+              <select id="purse-token" onchange="onTokenChange()">
+                <option value="native">BOT (native)</option>
+                <option value="erc20">USDT </option>
+              </select>
+            </div>
+            <div class="hint" id="token-hint">Payment in native BOT gas token</div>
+          </div>
+          <div class="field">
+  <label>Salt <span style="color:var(--slate-2)">(unique ID for this purse)</span></label>
+  <div style="display:flex;gap:8px">
+    <input type="text" id="purse-salt" placeholder="Auto-generated" style="flex:1">
+    <button class="btn btn-ghost btn-sm" type="button" onclick="genSalt()">↻ New</button>
+  </div>
+  <div class="hint">Used to compute your contract address. Set once — cannot be reused.</div>
+</div>
+          <div id="predicted-address-row" style="display:none;margin-bottom:20px">
+            <div style="font-size:12px;color:var(--slate);margin-bottom:4px">Your purse contract address (QR payload)</div>
+            <div id="predicted-address" style="font-family:monospace;font-size:12px;color:var(--indigo-light);word-break:break-all;background:var(--navy-2);padding:10px 14px;border-radius:8px;border:1px solid var(--border)">—</div>
+          </div>
+          <div class="divider"></div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center" id="create-btn" onclick="createPurse()">
+            Deploy purse on BOT Chain →
+          </button>
+          <div id="create-tx-status"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="screen" id="screen-dashboard">
+      <div class="dash-header">
+        <div>
+          <div class="page-title">My Purses</div>
+          <div class="page-sub">On-chain purses owned by your connected wallet.</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="refreshDashboard()">↻ Refresh</button>
+          <button class="btn btn-primary btn-sm" onclick="showScreen('create',document.querySelector('nav button:nth-child(2)'))">+ New purse</button>
+        </div>
+      </div>
+      <div class="purse-list" id="purse-list"></div>
+    </div>
+
+    <!-- SCAN & PAY -->
+    <div class="screen" id="screen-scan">
+      <div class="scan-container">
+        <div class="page-title">Scan & Pay</div>
+        <div class="page-sub">Enter a purse contract address to pay a seller.</div>
+        <div class="scan-card" style="margin-bottom:16px">
+          <div class="scan-icon">📷</div>
+          <p style="color:var(--slate);font-size:14px;margin-bottom:16px">Paste the purse contract address from the seller's QR code.</p>
+          <div style="display:flex;gap:8px">
+            <input type="text" id="scan-input" placeholder="0x purse address…" style="flex:1;background:var(--navy-2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--white);font:14px 'Inter',sans-serif;outline:none" onkeydown="if(event.key==='Enter')lookupPurse()">
+            <button class="btn btn-primary btn-sm" onclick="lookupPurse()">Look up</button>
+          </div>
+        </div>
+        <div id="pay-result"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- QR Modal -->
+<div class="modal-overlay" id="qr-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title" id="modal-purse-name">—</div>
+    <div class="modal-sub">Show this QR to receive payment</div>
+    <div class="qr-container"><canvas id="qr-canvas" width="240" height="240"></canvas></div>
+    <div class="qr-info">
+      <div class="qr-row">
+        <span class="qr-row-label">Current price</span>
+        <span class="qr-row-value qr-row-amount" id="modal-amount">—</span>
+      </div>
+      <div class="qr-row">
+        <span class="qr-row-label">Token</span>
+        <span class="qr-row-value" id="modal-token">—</span>
+      </div>
+      <div class="qr-row">
+        <span class="qr-row-label">Contract address</span>
+        <span class="qr-row-value" id="modal-id" style="font-family:monospace;font-size:11px;color:var(--slate)">—</span>
+      </div>
+    </div>
+    <div class="qr-note">ℹ️ This QR encodes your <strong>contract address</strong> — it never changes when you update the price.</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-sm" onclick="downloadQR()">⬇ Download QR</button>
+      <button class="btn btn-ghost btn-sm" onclick="copyContractAddr()">📋 Copy address</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"><div class="toast-dot"></div><span id="toast-text"></span></div>
+
+<!-- QR lib + ethers v6 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+
+<script>
+// ═══════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════
+const BOT_CHAIN_ID   = 968;
+const BOT_RPC        = 'https://rpc.bohr.life';   // update if different
+const EXPLORER       = 'https://scan.bohr.life';
+
+// ── Deployed contract addresses ──────────────────
+// Replace REGISTRY_ADDRESS after you deploy PurseRegistry.sol
+const REGISTRY_ADDRESS = '0xC2bAf237aD59D8478935d4B06DDe448613E51B86'; // TODO: replace after deploy
+
+// Your ERC-20 token
+const USDT  = '0x75edC9335175Fc0552D51D48439F229c10420fe3';
+
+// ── ABIs ────────────────────────────────────────
+const ERC20_ABI = [
+  { name:'balanceOf',   type:'function', stateMutability:'view',        inputs:[{name:'account',type:'address'}],                                        outputs:[{type:'uint256'}] },
+  { name:'decimals',    type:'function', stateMutability:'view',        inputs:[],                                                                       outputs:[{type:'uint8'}]   },
+  { name:'symbol',      type:'function', stateMutability:'view',        inputs:[],                                                                       outputs:[{type:'string'}]  },
+  { name:'transfer',    type:'function', stateMutability:'nonpayable',  inputs:[{name:'to',type:'address'},{name:'amount',type:'uint256'}],               outputs:[{type:'bool'}]    },
+  { name:'transferFrom',type:'function', stateMutability:'nonpayable',  inputs:[{name:'from',type:'address'},{name:'to',type:'address'},{name:'amount',type:'uint256'}], outputs:[{type:'bool'}] },
+  { name:'approve',     type:'function', stateMutability:'nonpayable',  inputs:[{name:'spender',type:'address'},{name:'amount',type:'uint256'}],          outputs:[{type:'bool'}]    },
+  { name:'allowance',   type:'function', stateMutability:'view',        inputs:[{name:'owner',type:'address'},{name:'spender',type:'address'}],           outputs:[{type:'uint256'}] },
+];
+
+const REGISTRY_ABI = [
+  { name:'createPurse',         type:'function', stateMutability:'nonpayable', inputs:[{name:'name_',type:'string'},{name:'description_',type:'string'},{name:'amount_',type:'uint256'},{name:'token_',type:'address'},{name:'salt_',type:'bytes32'}], outputs:[{name:'purse',type:'address'}] },
+  { name:'pursesOf',            type:'function', stateMutability:'view',       inputs:[{name:'owner_',type:'address'}], outputs:[{type:'address[]'}] },
+  { name:'computePurseAddress', type:'function', stateMutability:'view',       inputs:[{name:'owner_',type:'address'},{name:'salt_',type:'bytes32'}], outputs:[{type:'address'}] },
+  { name:'isPurse',             type:'function', stateMutability:'view',       inputs:[{name:'',type:'address'}], outputs:[{type:'bool'}] },
+  { name:'batchInfo',           type:'function', stateMutability:'view',       inputs:[{name:'purseAddresses',type:'address[]'}], outputs:[{name:'owners',type:'address[]'},{name:'names',type:'string[]'},{name:'descriptions',type:'string[]'},{name:'prices',type:'uint256[]'},{name:'tokens',type:'address[]'},{name:'totals',type:'uint256[]'},{name:'counts',type:'uint256[]'}] },
+  { type:'event', name:'PurseCreated', inputs:[{indexed:true,name:'owner',type:'address'},{indexed:true,name:'purseAddress',type:'address'},{indexed:true,name:'salt',type:'bytes32'},{name:'name',type:'string'},{name:'token',type:'address'},{name:'initialPrice',type:'uint256'}] },
+];
+
+const PURSE_WALLET_ABI = [
+  { name:'pay',           type:'function', stateMutability:'payable',    inputs:[],                               outputs:[] },
+  { name:'payERC20',      type:'function', stateMutability:'nonpayable', inputs:[{name:'amount',type:'uint256'}], outputs:[] },
+  { name:'setPrice',      type:'function', stateMutability:'nonpayable', inputs:[{name:'newAmount',type:'uint256'}], outputs:[] },
+  { name:'withdraw',      type:'function', stateMutability:'nonpayable', inputs:[],                               outputs:[] },
+  { name:'withdrawERC20', type:'function', stateMutability:'nonpayable', inputs:[{name:'token_',type:'address'}], outputs:[] },
+  { name:'owner',         type:'function', stateMutability:'view',       inputs:[],                               outputs:[{type:'address'}] },
+  { name:'currentPrice',  type:'function', stateMutability:'view',       inputs:[],                               outputs:[{type:'uint256'}] },
+  { name:'token',         type:'function', stateMutability:'view',       inputs:[],                               outputs:[{type:'address'}] },
+  { name:'name',          type:'function', stateMutability:'view',       inputs:[],                               outputs:[{type:'string'}]  },
+  { name:'description',   type:'function', stateMutability:'view',       inputs:[],                               outputs:[{type:'string'}]  },
+  { name:'totalReceived', type:'function', stateMutability:'view',       inputs:[],                               outputs:[{type:'uint256'}] },
+  { name:'paymentCount',  type:'function', stateMutability:'view',       inputs:[],                               outputs:[{type:'uint256'}] },
+  { name:'info',          type:'function', stateMutability:'view',       inputs:[],                               outputs:[{name:'owner_',type:'address'},{name:'name_',type:'string'},{name:'description_',type:'string'},{name:'price_',type:'uint256'},{name:'token_',type:'address'},{name:'totalReceived_',type:'uint256'},{name:'paymentCount_',type:'uint256'},{name:'ethBalance_',type:'uint256'}] },
+];
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let provider, signer, userAddress;
+let erc20Decimals = 18;
+let erc20Symbol   = 'BOT';
+let activeModal   = null;
+
+// ═══════════════════════════════════════════════
+// WALLET
+// ═══════════════════════════════════════════════
+async function connectWallet() {
+  if (!window.ethereum) { toast('MetaMask not found — install it first', 'error'); return; }
+  try {
+    await window.ethereum.request({ method: 'eth_requestAccounts' });
+    provider = new ethers.BrowserProvider(window.ethereum);
+    signer   = await provider.getSigner();
+    userAddress = await signer.getAddress();
+    updateWalletUI();
+    await checkAndSwitchChain();
+    await loadERC20Meta();
+    toast('Wallet connected ✓', 'success');
+    genSalt(); // generate salt once connected
+  } catch(e) {
+    toast('Connection cancelled', 'error');
+  }
+}
+
+async function checkAndSwitchChain() {
+  const net = await provider.getNetwork();
+  const chainId = Number(net.chainId);
+  const badge = document.getElementById('chain-badge');
+  badge.style.display = 'inline-block';
+
+  if (chainId === BOT_CHAIN_ID) {
+    badge.textContent = 'BOT Chain';
+    badge.className = 'chain-ok';
+  } else {
+    badge.textContent = `Wrong chain (${chainId})`;
+    badge.className = 'chain-wrong';
+    try {
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0x' + BOT_CHAIN_ID.toString(16) }],
+      });
+      badge.textContent = 'BOT Chain';
+      badge.className = 'chain-ok';
+    } catch(e) {
+      // Chain not added — prompt user to add it
+      try {
+        await window.ethereum.request({
+          method: 'wallet_addEthereumChain',
+          params: [{
+            chainId: '0x' + BOT_CHAIN_ID.toString(16),
+            chainName: 'BOT Chain',
+            nativeCurrency: { name:'BOT', symbol:'BOT', decimals:18 },
+            rpcUrls: [BOT_RPC],
+            blockExplorerUrls: [EXPLORER],
+          }],
+        });
+        badge.textContent = 'BOT Chain';
+        badge.className = 'chain-ok';
+      } catch(e2) {
+        toast('Please switch to BOT Chain manually', 'error');
+      }
+    }
+  }
+}
+
+function updateWalletUI() {
+  if (!userAddress) return;
+  const short = userAddress.slice(0,6) + '…' + userAddress.slice(-4);
+  document.getElementById('wallet-label').textContent = short;
+  document.getElementById('wallet-dot').classList.remove('disconnected');
+  document.getElementById('connect-btn').textContent = 'Disconnect';
+  document.getElementById('connect-btn').onclick = disconnectWallet;
+}
+
+function disconnectWallet() {
+  provider = signer = userAddress = null;
+  document.getElementById('wallet-label').textContent = 'Not connected';
+  document.getElementById('wallet-dot').classList.add('disconnected');
+  document.getElementById('connect-btn').textContent = 'Connect Wallet';
+  document.getElementById('connect-btn').onclick = connectWallet;
+  document.getElementById('chain-badge').style.display = 'none';
+}
+
+window.ethereum?.on('accountsChanged', (accs) => {
+  if (!accs.length) disconnectWallet();
+  else connectWallet();
+});
+window.ethereum?.on('chainChanged', () => location.reload());
+
+async function loadERC20Meta() {
+  try {
+    const rp = new ethers.JsonRpcProvider(BOT_RPC);
+    const c  = new ethers.Contract(USDT, ERC20_ABI, rp);
+    erc20Decimals = Number(await c.decimals());
+    erc20Symbol   = await c.symbol();
+  } catch(e) { /* use defaults */ }
+}
+
+// ═══════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════
+function showScreen(id, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (id === 'dashboard') refreshDashboard();
+}
+
+// ═══════════════════════════════════════════════
+// SALT / PREDICTED ADDRESS
+// ═══════════════════════════════════════════════
+function genSalt() {
+  const raw = crypto.getRandomValues(new Uint8Array(32));
+  const hex = '0x' + Array.from(raw).map(b => b.toString(16).padStart(2,'0')).join('');
+  document.getElementById('purse-salt').value = hex;
+  updatePredictedAddress();
+}
+
+async function updatePredictedAddress() {
+  const saltVal = document.getElementById('purse-salt').value;
+  if (!userAddress || !saltVal || REGISTRY_ADDRESS === '0x0000000000000000000000000000000000000000') {
+    document.getElementById('predicted-address-row').style.display = 'none';
+    return;
+  }
+  try {
+    const rp  = new ethers.JsonRpcProvider(BOT_RPC);
+    const reg = new ethers.Contract(REGISTRY_ADDRESS, REGISTRY_ABI, rp);
+    const addr = await reg.computePurseAddress(userAddress, saltVal);
+    document.getElementById('predicted-address').textContent = addr;
+    document.getElementById('predicted-address-row').style.display = 'block';
+  } catch(e) {}
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  genSalt();
+  document.getElementById('purse-salt').addEventListener('change', updatePredictedAddress);
+  onTokenChange();
+});
+
+// ═══════════════════════════════════════════════
+// TOKEN SELECTOR
+// ═══════════════════════════════════════════════
+function onTokenChange() {
+  const val  = document.getElementById('purse-token').value;
+  const hint = document.getElementById('token-hint');
+  const sym  = document.querySelector('.currency-symbol');
+  if (val === 'native') {
+    hint.textContent = 'Payment in native BOT gas token';
+    sym.setAttribute('data-symbol', 'Ξ');
+  } else {
+    hint.textContent = `Payment in ${erc20Symbol} (${USDT.slice(0,8)}…)`;
+    sym.setAttribute('data-symbol', '');
+  }
+}
+
+// ═══════════════════════════════════════════════
+// CREATE PURSE
+// ═══════════════════════════════════════════════
+async function createPurse() {
+  if (!signer) { toast('Connect your wallet first', 'error'); return; }
+  if (REGISTRY_ADDRESS === '0x0000000000000000000000000000000000000000') {
+    toast('Deploy PurseRegistry.sol first and update REGISTRY_ADDRESS', 'error'); return;
+  }
+
+  const name    = document.getElementById('purse-name').value.trim();
+  const desc    = document.getElementById('purse-desc').value.trim();
+  const amount  = document.getElementById('purse-amount').value.trim();
+  const isERC20 = document.getElementById('purse-token').value === 'erc20';
+  const saltRaw = document.getElementById('purse-salt').value.trim();
+
+  // Validate salt
+  if (!saltRaw || saltRaw.length !== 66 || !saltRaw.startsWith('0x')) {
+    toast('Invalid salt — click ↻ New to regenerate', 'error'); return;
+  }
+  const salt = saltRaw; // genSalt() already produces valid bytes32
+
+  if (!name)   { toast('Give your purse a name', 'error'); return; }
+  if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+    toast('Enter a valid price', 'error'); return;
+  }
+
+  const decimals  = isERC20 ? erc20Decimals : 18;
+  const tokenAddr = isERC20 ? USDT : ethers.ZeroAddress;
+
+  let amountWei;
+  try {
+    amountWei = ethers.parseUnits(amount, decimals);
+  } catch(e) {
+    toast('Invalid price format', 'error'); return;
+  }
+  if (amountWei === 0n) { toast('Amount rounds to zero — use a larger value', 'error'); return; }
+
+  const btn      = document.getElementById('create-btn');
+  const statusEl = document.getElementById('create-tx-status');
+  btn.disabled    = true;
+  btn.textContent = 'Deploying…';
+  setTxStatus(statusEl, 'pending', 'Waiting for wallet confirmation…');
+
+  try {
+    const registry = new ethers.Contract(REGISTRY_ADDRESS, REGISTRY_ABI, signer);
+
+    console.log('Calling createPurse with:', { name, desc, amountWei: amountWei.toString(), tokenAddr, salt });
+
+    const tx = await registry.createPurse(name, desc, amountWei, tokenAddr, salt);
+    setTxStatus(statusEl, 'pending', 'Transaction sent — waiting for confirmation…', tx.hash);
+
+    const receipt = await tx.wait();
+
+    const iface = new ethers.Interface(REGISTRY_ABI);
+    let purseAddr = null;
+    for (const log of receipt.logs) {
+      try {
+        const parsed = iface.parseLog(log);
+        if (parsed?.name === 'PurseCreated') { purseAddr = parsed.args.purseAddress; break; }
+      } catch(e) {}
+    }
+
+    setTxStatus(statusEl, 'success', `Purse deployed! Contract: ${purseAddr}`, tx.hash);
+    toast(`Purse "${name}" deployed on-chain ✓`, 'success');
+
+    document.getElementById('purse-name').value   = '';
+    document.getElementById('purse-desc').value   = '';
+    document.getElementById('purse-amount').value = '';
+    genSalt();
+
+    setTimeout(() => {
+      showScreen('dashboard', document.querySelector('nav button:nth-child(3)'));
+      if (purseAddr) setTimeout(() => openQRByAddress(purseAddr), 600);
+    }, 1200);
+
+  } catch(e) {
+    let msg = e?.reason || e?.shortMessage || e?.message || 'Transaction failed';
+    if (e?.data && e.data !== '0x') {
+      const iface = new ethers.Interface([
+        'error ZeroPrice()',
+        'error DeployFailed()',
+        'error PurseAlreadyExists(bytes32)',
+        'error AlreadyInitialized()',
+      ]);
+      try { msg = iface.parseError(e.data)?.name || msg; } catch(_) {}
+    }
+    console.error('createPurse error:', e);
+    setTxStatus(statusEl, 'error', msg);
+    toast('Failed: ' + msg, 'error');
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = 'Deploy purse on BOT Chain →';
+  }
+}
+// ═══════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════
+async function refreshDashboard() {
+  if (!userAddress) {
+    document.getElementById('purse-list').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🔌</div>
+        <h3>Connect your wallet</h3>
+        <p>Connect MetaMask to see your on-chain purses.</p>
+        <button class="btn btn-primary" onclick="connectWallet()">Connect Wallet</button>
+      </div>`;
+    return;
+  }
+  if (REGISTRY_ADDRESS === '0x0000000000000000000000000000000000000000') {
+    document.getElementById('purse-list').innerHTML = `<div class="empty-state"><div class="empty-icon">⚙️</div><h3>Registry not deployed</h3><p>Set REGISTRY_ADDRESS after deploying PurseRegistry.sol.</p></div>`;
+    return;
+  }
+
+  document.getElementById('purse-list').innerHTML = `<div class="empty-state"><div class="spinner" style="width:24px;height:24px;margin:0 auto 12px"></div><p>Loading on-chain purses…</p></div>`;
+
+  try {
+    const rp  = new ethers.JsonRpcProvider(BOT_RPC);
+    const reg = new ethers.Contract(REGISTRY_ADDRESS, REGISTRY_ABI, rp);
+
+    const addrs = await reg.pursesOf(userAddress);
+    if (!addrs.length) {
+      document.getElementById('purse-list').innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">👝</div>
+          <h3>No purses yet</h3>
+          <p>Deploy your first purse to start accepting payments.</p>
+          <button class="btn btn-primary" onclick="showScreen('create',document.querySelector('nav button:nth-child(2)'))">Create a purse</button>
+        </div>`;
+      return;
+    }
+
+    const info = await reg.batchInfo(addrs);
+    renderDashboard(addrs, info);
+
+  } catch(e) {
+    document.getElementById('purse-list').innerHTML = `<div class="empty-state"><div class="empty-icon">❌</div><h3>Failed to load</h3><p>${e.message}</p></div>`;
+  }
+}
+
+function renderDashboard(addrs, info) {
+  const list = document.getElementById('purse-list');
+  list.innerHTML = addrs.map((addr, i) => {
+    const isERC20  = info.tokens[i] !== ethers.ZeroAddress;
+    const decimals = isERC20 ? erc20Decimals : 18;
+    const symbol   = isERC20 ? erc20Symbol   : 'BOT';
+    const price    = ethers.formatUnits(info.prices[i], decimals);
+    const total    = ethers.formatUnits(info.totals[i], decimals);
+    const shortAddr = addr.slice(0,8) + '…' + addr.slice(-6);
+
+    return `
+    <div class="purse-card" id="card-${addr}">
+      <div class="purse-card-header">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <div class="purse-name">${esc(info.names[i])}</div>
+          <span class="badge badge-active">● Active</span>
+        </div>
+        ${info.descriptions[i] ? `<div class="purse-desc">${esc(info.descriptions[i])}</div>` : ''}
+        <div class="tag-row">
+          <span class="badge badge-onchain">⛓ On-chain</span>
+          <span class="badge badge-id">${shortAddr}</span>
+        </div>
+      </div>
+      <div class="purse-card-body">
+        <div class="price-display" id="price-display-${addr}">
+          <div class="price-amount" id="price-val-${addr}">${parseFloat(price).toLocaleString('en',{maximumFractionDigits:6})}</div>
+          <div class="price-currency">${symbol}</div>
+        </div>
+        <div style="font-size:12px;color:var(--slate);margin-bottom:16px">
+          ${info.counts[i].toString()} payments · ${parseFloat(total).toLocaleString('en',{maximumFractionDigits:6})} ${symbol} total received
+        </div>
+
+        <div class="price-edit-row" id="price-edit-${addr}" style="display:none">
+          <input type="number" id="edit-input-${addr}" value="${price}" min="0" step="any" placeholder="New price…"
+            onkeydown="if(event.key==='Enter')savePrice('${addr}','${symbol}',${isERC20},${decimals})">
+          <button class="btn btn-success btn-sm" onclick="savePrice('${addr}','${symbol}',${isERC20},${decimals})">Save</button>
+          <button class="btn btn-ghost btn-sm" onclick="cancelEdit('${addr}')">✕</button>
+        </div>
+        <div id="price-tx-${addr}"></div>
+
+        <div class="purse-actions">
+          <button class="btn btn-primary btn-sm" onclick="openQRByAddress('${addr}')">📱 Show QR</button>
+          <button class="btn btn-ghost btn-sm" onclick="startEdit('${addr}')">✏ Edit price</button>
+          <button class="btn btn-ghost btn-sm" onclick="withdrawPurse('${addr}',${isERC20})">💸 Withdraw</button>
+          <a href="${EXPLORER}/address/${addr}" target="_blank" class="btn btn-ghost btn-sm" style="text-decoration:none">🔍 Explorer</a>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════
+// PRICE EDIT
+// ═══════════════════════════════════════════════
+function startEdit(addr) {
+  document.getElementById('price-display-' + addr).style.display = 'none';
+  document.getElementById('price-edit-'    + addr).style.display = 'flex';
+  document.getElementById('edit-input-'    + addr).focus();
+}
+function cancelEdit(addr) {
+  document.getElementById('price-display-' + addr).style.display = 'flex';
+  document.getElementById('price-edit-'    + addr).style.display = 'none';
+}
+
+async function savePrice(addr, symbol, isERC20, decimals) {
+  if (!signer) { toast('Connect wallet', 'error'); return; }
+  const val = document.getElementById('edit-input-' + addr).value;
+  if (!val || parseFloat(val) <= 0) { toast('Enter a valid price', 'error'); return; }
+
+  const amountWei = ethers.parseUnits(val, decimals);
+  const statusEl  = document.getElementById('price-tx-' + addr);
+  setTxStatus(statusEl, 'pending', 'Confirm in wallet…');
+
+  try {
+    const purse = new ethers.Contract(addr, PURSE_WALLET_ABI, signer);
+    const tx    = await purse.setPrice(amountWei);
+    setTxStatus(statusEl, 'pending', 'Updating price on-chain…', tx.hash);
+    await tx.wait();
+
+    document.getElementById('price-val-' + addr).textContent =
+      parseFloat(val).toLocaleString('en', { maximumFractionDigits: 6 });
+    cancelEdit(addr);
+    setTxStatus(statusEl, 'success', 'Price updated — QR code unchanged ✓', tx.hash);
+    toast('Price updated on-chain ✓', 'success');
+  } catch(e) {
+    setTxStatus(statusEl, 'error', e?.reason || e?.shortMessage || 'Failed');
+  }
+}
+
+// ═══════════════════════════════════════════════
+// WITHDRAW
+// ═══════════════════════════════════════════════
+async function withdrawPurse(addr, isERC20) {
+  if (!signer) { toast('Connect wallet', 'error'); return; }
+  const statusEl = document.getElementById('price-tx-' + addr);
+  setTxStatus(statusEl, 'pending', 'Confirm withdrawal in wallet…');
+  try {
+    const purse = new ethers.Contract(addr, PURSE_WALLET_ABI, signer);
+    const tx    = isERC20
+      ? await purse.withdrawERC20(USDT)
+      : await purse.withdraw();
+    setTxStatus(statusEl, 'pending', 'Withdrawing…', tx.hash);
+    await tx.wait();
+    setTxStatus(statusEl, 'success', 'Withdrawn to your wallet ✓', tx.hash);
+    toast('Withdrawal successful ✓', 'success');
+    setTimeout(refreshDashboard, 1500);
+  } catch(e) {
+    setTxStatus(statusEl, 'error', e?.reason || e?.shortMessage || 'Failed');
+  }
+}
+
+// ═══════════════════════════════════════════════
+// QR MODAL
+// ═══════════════════════════════════════════════
+async function openQRByAddress(addr) {
+  activeModal = { address: addr };
+  document.getElementById('modal-purse-name').textContent = 'Loading…';
+  document.getElementById('modal-amount').textContent     = '—';
+  document.getElementById('modal-token').textContent      = '—';
+  document.getElementById('modal-id').textContent         = addr;
+  document.getElementById('qr-modal').classList.add('open');
+
+  // Render QR immediately with the address
+  const payUrl = `${window.location.origin}${window.location.pathname}?pay=${addr}`;
+  renderQR(payUrl);
+
+  try {
+    const rp    = new ethers.JsonRpcProvider(BOT_RPC);
+    const purse = new ethers.Contract(addr, PURSE_WALLET_ABI, rp);
+    const data  = await purse.info();
+
+    const isERC20  = data.token_ !== ethers.ZeroAddress;
+    const decimals = isERC20 ? erc20Decimals : 18;
+    const symbol   = isERC20 ? erc20Symbol   : 'BOT';
+    const price    = ethers.formatUnits(data.price_, decimals);
+
+    activeModal = { address: addr, name: data.name_, isERC20, decimals, symbol, price };
+
+    document.getElementById('modal-purse-name').textContent = data.name_;
+    document.getElementById('modal-amount').textContent     = `${parseFloat(price).toLocaleString('en',{maximumFractionDigits:6})} ${symbol}`;
+    document.getElementById('modal-token').textContent      = isERC20 ? `${symbol} (${USDT.slice(0,8)}…)` : 'BOT (native)';
+  } catch(e) {
+    document.getElementById('modal-purse-name').textContent = 'Purse';
+  }
+}
+
+function closeModal() {
+  document.getElementById('qr-modal').classList.remove('open');
+  activeModal = null;
+}
+
+function renderQR(text) {
+  const canvas = document.getElementById('qr-canvas');
+  const ctx    = canvas.getContext('2d');
+  ctx.clearRect(0, 0, 240, 240);
+
+  const tmp = document.createElement('div');
+  tmp.style.cssText = 'position:absolute;left:-9999px';
+  document.body.appendChild(tmp);
+
+  try {
+    new QRCode(tmp, { text, width:240, height:240, colorDark:'#000', colorLight:'#fff', correctLevel:QRCode.CorrectLevel.H });
+    setTimeout(() => {
+      const el = tmp.querySelector('img') || tmp.querySelector('canvas');
+      if (el) {
+        if (el.tagName === 'IMG') {
+          const img = new Image(); img.onload = () => ctx.drawImage(img,0,0,240,240); img.src = el.src;
+        } else { ctx.drawImage(el,0,0,240,240); }
+      }
+      document.body.removeChild(tmp);
+    }, 120);
+  } catch(e) { document.body.removeChild(tmp); }
+}
+
+function downloadQR() {
+  if (!activeModal) return;
+  const a = document.createElement('a');
+  a.download = `pursepay-${(activeModal.name||activeModal.address).replace(/\s+/g,'-')}.png`;
+  a.href = document.getElementById('qr-canvas').toDataURL('image/png');
+  a.click();
+  toast('QR downloaded', 'success');
+}
+
+function copyContractAddr() {
+  if (!activeModal?.address) return;
+  navigator.clipboard.writeText(activeModal.address).then(() => toast('Contract address copied ✓', 'success'));
+}
+
+document.getElementById('qr-modal').addEventListener('click', function(e) { if (e.target===this) closeModal(); });
+
+// ═══════════════════════════════════════════════
+// SCAN & PAY
+// ═══════════════════════════════════════════════
+async function lookupPurse() {
+  const input  = document.getElementById('scan-input').value.trim();
+  const result = document.getElementById('pay-result');
+  result.innerHTML = `<div class="scan-card"><div class="spinner" style="width:24px;height:24px;margin:0 auto 12px"></div><p style="color:var(--slate)">Looking up purse…</p></div>`;
+  result.style.display = 'block';
+
+  if (!ethers.isAddress(input)) {
+    result.innerHTML = `<div class="scan-card"><div class="scan-icon">❌</div><h3 style="font-size:16px;margin-bottom:8px">Invalid address</h3><p style="color:var(--slate);font-size:13px">Enter a valid 0x contract address.</p></div>`;
+    return;
+  }
+
+  try {
+    const rp  = new ethers.JsonRpcProvider(BOT_RPC);
+
+    // Optionally verify it's a known purse
+    if (REGISTRY_ADDRESS !== '0x0000000000000000000000000000000000000000') {
+      const reg = new ethers.Contract(REGISTRY_ADDRESS, REGISTRY_ABI, rp);
+      const valid = await reg.isPurse(input);
+      if (!valid) {
+        result.innerHTML = `<div class="scan-card"><div class="scan-icon">⚠️</div><h3 style="font-size:16px;margin-bottom:8px">Not a PursePay purse</h3><p style="color:var(--slate);font-size:13px">This address is not registered in PurseRegistry.</p></div>`;
+        return;
+      }
+    }
+
+    const purse = new ethers.Contract(input, PURSE_WALLET_ABI, rp);
+    const data  = await purse.info();
+
+    const isERC20  = data.token_ !== ethers.ZeroAddress;
+    const decimals = isERC20 ? erc20Decimals : 18;
+    const symbol   = isERC20 ? erc20Symbol   : 'BOT';
+    const price    = ethers.formatUnits(data.price_, decimals);
+
+    showPayPage({ address: input, name: data.name_, description: data.description_, price, symbol, isERC20, decimals, priceWei: data.price_ }, result);
+
+  } catch(e) {
+    result.innerHTML = `<div class="scan-card"><div class="scan-icon">❌</div><h3 style="font-size:16px;margin-bottom:8px">Not found</h3><p style="color:var(--slate);font-size:13px">${e.message}</p></div>`;
+  }
+}
+
+function showPayPage(purse, container) {
+  const priceWeiStr = purse.priceWei.toString();
+  container.innerHTML = `
+    <div class="scan-card">
+      <div style="color:var(--slate);font-size:13px;margin-bottom:8px">Payment to</div>
+      <div style="font-size:20px;font-weight:700;margin-bottom:4px">${esc(purse.name)}</div>
+      ${purse.description ? `<div style="color:var(--slate);font-size:13px;margin-bottom:16px">${esc(purse.description)}</div>` : '<div style="margin-bottom:16px"></div>'}
+      <div style="font-size:38px;font-weight:800;letter-spacing:-1px;color:var(--mint);margin-bottom:4px">
+        ${parseFloat(purse.price).toLocaleString('en',{maximumFractionDigits:6})}
+      </div>
+      <div style="color:var(--slate);font-size:13px;margin-bottom:20px">${purse.symbol}</div>
+      <div style="background:var(--navy-2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:16px;text-align:left">
+        <div style="font-size:12px;color:var(--slate);margin-bottom:4px">Purse contract</div>
+        <div style="font-family:monospace;font-size:11px;word-break:break-all;font-weight:500">${purse.address}</div>
+      </div>
+
+      ${purse.isERC20 ? `
+        <div class="approve-row" id="approve-row-${purse.address}">
+          <p>Step 1: Approve the purse to spend your ${purse.symbol}</p>
+          <button class="btn btn-amber btn-sm" onclick="approveToken('${purse.address}','${priceWeiStr}')">
+            Approve ${parseFloat(purse.price).toLocaleString('en',{maximumFractionDigits:6})} ${purse.symbol}
+          </button>
+        </div>
+        <div style="font-size:12px;color:var(--slate);margin-bottom:12px;text-align:center">
+          Step 2: Confirm payment after approval
+        </div>` : ''}
+
+      <button class="btn btn-success" style="width:100%;justify-content:center" id="pay-btn-${purse.address}"
+        onclick="executePayment('${purse.address}','${priceWeiStr}',${purse.isERC20})">
+        Pay ${parseFloat(purse.price).toLocaleString('en',{maximumFractionDigits:6})} ${purse.symbol}
+      </button>
+      <div id="pay-tx-${purse.address}"></div>
+    </div>`;
+}
+async function approveToken(purseAddr, priceWeiStr) {
+  const priceWei = BigInt(priceWeiStr);
+  if (!signer) { toast('Connect wallet first', 'error'); return; }
+  const statusEl = document.getElementById('pay-tx-' + purseAddr);
+  setTxStatus(statusEl, 'pending', 'Approving token spend…');
+  try {
+    const token = new ethers.Contract(USDT, ERC20_ABI, signer);
+    const tx    = await token.approve(purseAddr, priceWei);
+    setTxStatus(statusEl, 'pending', 'Waiting for approval confirmation…', tx.hash);
+    await tx.wait();
+    setTxStatus(statusEl, 'success', 'Approved ✓ — you can now pay', tx.hash);
+    const row = document.getElementById('approve-row-' + purseAddr);
+    if (row) row.style.display = 'none';
+    toast('Approval confirmed ✓', 'success');
+  } catch(e) {
+    setTxStatus(statusEl, 'error', e?.reason || e?.shortMessage || 'Approval failed');
+  }
+}
+
+async function executePayment(purseAddr, priceWeiStr, isERC20) {
+  const priceWei = BigInt(priceWeiStr);
+  if (!signer) { toast('Connect wallet first', 'error'); return; }
+  const btn      = document.getElementById('pay-btn-' + purseAddr);
+  const statusEl = document.getElementById('pay-tx-' + purseAddr);
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+  setTxStatus(statusEl, 'pending', 'Confirm payment in wallet…');
+
+  try {
+    const purse = new ethers.Contract(purseAddr, PURSE_WALLET_ABI, signer);
+    const tx = isERC20
+      ? await purse.payERC20(priceWei)
+      : await purse.pay({ value: priceWei });
+    setTxStatus(statusEl, 'pending', 'Payment sent — confirming on-chain…', tx.hash);
+    await tx.wait();
+    setTxStatus(statusEl, 'success', 'Payment confirmed on-chain! 🎉', tx.hash);
+    toast('Payment confirmed on BOT Chain ✓', 'success');
+    if (btn) { btn.textContent = 'Paid ✓'; }
+  } catch(e) {
+    setTxStatus(statusEl, 'error', e?.reason || e?.shortMessage || 'Payment failed');
+    if (btn) { btn.disabled = false; btn.textContent = 'Retry payment'; }
+  }
+}
+// ═══════════════════════════════════════════════
+// TX STATUS HELPER
+// ═══════════════════════════════════════════════
+function setTxStatus(el, type, msg, hash) {
+  if (!el) return;
+  const link = hash ? `<br><a class="tx-link" href="${EXPLORER}/tx/${hash}" target="_blank">View on Explorer ↗</a>` : '';
+  const icon = type === 'pending' ? '<div class="spinner"></div>' : (type === 'success' ? '✓' : '✕');
+  el.innerHTML = `<div class="tx-status ${type}">${icon}<span>${msg}${link}</span></div>`;
+}
+
+// ═══════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════
+function esc(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  el.className = `toast ${type}`;
+  document.getElementById('toast-text').textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+// ── URL pay deep link ──
+(function() {
+  const addr = new URLSearchParams(window.location.search).get('pay');
+  if (addr && ethers.isAddress(addr)) {
+    showScreen('scan', document.querySelector('nav button:nth-child(4)'));
+    document.getElementById('scan-input').value = addr;
+    setTimeout(lookupPurse, 300);
+  }
+})();
+</script>
+</body>
+</html>
