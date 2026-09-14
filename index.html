@@ -902,14 +902,18 @@ async function lookupPurse() {
     const rp  = new ethers.JsonRpcProvider(BOT_RPC);
 
     // Optionally verify it's a known purse
-    if (REGISTRY_ADDRESS !== '0x0000000000000000000000000000000000000000') {
-      const reg = new ethers.Contract(REGISTRY_ADDRESS, REGISTRY_ABI, rp);
-      const valid = await reg.isPurse(input);
-      if (!valid) {
-        result.innerHTML = `<div class="scan-card"><div class="scan-icon">⚠️</div><h3 style="font-size:16px;margin-bottom:8px">Not a PursePay purse</h3><p style="color:var(--slate);font-size:13px">This address is not registered in PurseRegistry.</p></div>`;
-        return;
-      }
+   if (REGISTRY_ADDRESS !== '0x0000000000000000000000000000000000000000') {
+  try {
+    const reg = new ethers.Contract(REGISTRY_ADDRESS, REGISTRY_ABI, rp);
+    const valid = await reg.isPurse(input);
+    if (!valid) {
+      result.innerHTML = `<div class="scan-card"><div class="scan-icon">⚠️</div><h3 style="font-size:16px;margin-bottom:8px">Not a PursePay purse</h3><p style="color:var(--slate);font-size:13px">This address is not registered in PurseRegistry.</p></div>`;
+      return;
     }
+  } catch(e) {
+    // registry check failed — proceed anyway and let the wallet call fail if invalid
+  }
+}
 
     const purse = new ethers.Contract(input, PURSE_WALLET_ABI, rp);
     const data  = await purse.info();
@@ -1029,14 +1033,37 @@ function toast(msg, type = 'success') {
 }
 
 // ── URL pay deep link ──
-(function() {
+// ── URL pay deep link ──
+function handlePayDeepLink() {
   const addr = new URLSearchParams(window.location.search).get('pay');
-  if (addr && ethers.isAddress(addr)) {
+  if (!addr) return;
+
+  // Wait for ethers to be ready
+  const tryLoad = () => {
+    if (typeof ethers === 'undefined' || !ethers.isAddress) {
+      setTimeout(tryLoad, 100);
+      return;
+    }
+    if (!ethers.isAddress(addr)) {
+      toast('Invalid purse address in QR', 'error');
+      return;
+    }
+    // Show scan screen
     showScreen('scan', document.querySelector('nav button:nth-child(4)'));
     document.getElementById('scan-input').value = addr;
-    setTimeout(lookupPurse, 300);
-  }
-})();
+
+    // Auto-lookup immediately — no wallet needed to view purse info
+    lookupPurse();
+  };
+  tryLoad();
+}
+
+// Run after DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', handlePayDeepLink);
+} else {
+  handlePayDeepLink();
+}
 </script>
 </body>
 </html>
