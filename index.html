@@ -107,6 +107,7 @@
   .badge { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; }
   .badge-active { background:var(--mint-dim); color:var(--mint); }
   .badge-onchain { background:var(--indigo-dim); color:var(--indigo-light); }
+  .badge-local { background:rgba(245,158,11,.12); color:var(--amber); }
   .badge-id { background:var(--indigo-dim); color:var(--indigo-light); font-family:monospace; font-size:10px; text-transform:none; letter-spacing:0; }
   .tag-row { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
 
@@ -116,11 +117,10 @@
   .empty-state h3 { font-size:18px; font-weight:600; color:var(--white); margin-bottom:8px; }
   .empty-state p { font-size:14px; margin-bottom:24px; }
 
-  /* MODALS */
+  /* QR MODAL */
   .modal-overlay { position:fixed; inset:0; z-index:200; background:rgba(15,23,41,0.88); backdrop-filter:blur(6px); display:none; align-items:center; justify-content:center; padding:20px; }
   .modal-overlay.open { display:flex; }
   .modal { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:32px; width:100%; max-width:440px; position:relative; animation:modalIn .2s ease; max-height:90vh; overflow-y:auto; }
-  #pay-modal .modal { max-width:400px; }
   @keyframes modalIn { from{opacity:0;transform:scale(.96)} to{opacity:1;transform:none} }
   .modal-close { position:absolute; top:16px; right:16px; background:var(--navy-2); border:1px solid var(--border); color:var(--slate); font-size:18px; width:32px; height:32px; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .15s; }
   .modal-close:hover { color:var(--white); background:var(--navy-3); }
@@ -199,14 +199,14 @@
     <div class="screen active" id="screen-landing">
       <div class="landing-hero">
         <h1>Your payment<br><span>purse, instantly.</span></h1>
-        <p>Create an on-chain purse, set a price, share your QR. Buyers pay in BOT or USDT — straight to your wallet.</p>
+        <p>Create an on-chain purse, set a price, share your QR. Buyers pay in BOT tokens — straight to your wallet.</p>
         <button class="btn btn-primary" onclick="showScreen('create',document.querySelector('nav button:nth-child(2)'))">Create your first purse →</button>
       </div>
       <div class="features">
         <div class="feature-card">
           <div class="feature-icon" style="background:var(--indigo-dim)">🔒</div>
           <h3>Stable QR codes</h3>
-          <p>Update your price any time on-chain. Your QR code never changes.</p>
+          <p>Update your price any time on-chain. Your QR code (the contract address) never changes.</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon" style="background:var(--mint-dim)">⛓</div>
@@ -216,12 +216,12 @@
         <div class="feature-card">
           <div class="feature-icon" style="background:rgba(245,158,11,.1)">📱</div>
           <h3>Scan to pay</h3>
-          <p>Buyers scan your QR, see the live price, and confirm in one tap.</p>
+          <p>Buyers scan your QR, see the live on-chain price, approve tokens, and confirm.</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon" style="background:rgba(239,68,68,.1)">💼</div>
-          <h3>BOT or USDT</h3>
-          <p>Accept native BOT or USDT — you choose per purse.</p>
+          <h3>Multiple purses</h3>
+          <p>Deploy as many purses as you need — one per product, service, or event.</p>
         </div>
       </div>
     </div>
@@ -248,19 +248,19 @@
               </div>
               <select id="purse-token" onchange="onTokenChange()">
                 <option value="native">BOT (native)</option>
-                <option value="erc20">USDT</option>
+                <option value="erc20">USDT </option>
               </select>
             </div>
             <div class="hint" id="token-hint">Payment in native BOT gas token</div>
           </div>
           <div class="field">
-            <label>Salt <span style="color:var(--slate-2)">(unique ID for this purse)</span></label>
-            <div style="display:flex;gap:8px">
-              <input type="text" id="purse-salt" placeholder="Auto-generated" style="flex:1">
-              <button class="btn btn-ghost btn-sm" type="button" onclick="genSalt()">↻ New</button>
-            </div>
-            <div class="hint">Used to compute your contract address. Set once — cannot be reused.</div>
-          </div>
+  <label>Salt <span style="color:var(--slate-2)">(unique ID for this purse)</span></label>
+  <div style="display:flex;gap:8px">
+    <input type="text" id="purse-salt" placeholder="Auto-generated" style="flex:1">
+    <button class="btn btn-ghost btn-sm" type="button" onclick="genSalt()">↻ New</button>
+  </div>
+  <div class="hint">Used to compute your contract address. Set once — cannot be reused.</div>
+</div>
           <div id="predicted-address-row" style="display:none;margin-bottom:20px">
             <div style="font-size:12px;color:var(--slate);margin-bottom:4px">Your purse contract address (QR payload)</div>
             <div id="predicted-address" style="font-family:monospace;font-size:12px;color:var(--indigo-light);word-break:break-all;background:var(--navy-2);padding:10px 14px;border-radius:8px;border:1px solid var(--border)">—</div>
@@ -294,7 +294,7 @@
       <div class="scan-container">
         <div class="page-title">Scan & Pay</div>
         <div class="page-sub">Enter a purse contract address to pay a seller.</div>
-        <div class="scan-card">
+        <div class="scan-card" style="margin-bottom:16px">
           <div class="scan-icon">📷</div>
           <p style="color:var(--slate);font-size:14px;margin-bottom:16px">Paste the purse contract address from the seller's QR code.</p>
           <div style="display:flex;gap:8px">
@@ -302,6 +302,7 @@
             <button class="btn btn-primary btn-sm" onclick="lookupPurse()">Look up</button>
           </div>
         </div>
+        <div id="pay-result"></div>
       </div>
     </div>
   </main>
@@ -310,7 +311,7 @@
 <!-- QR Modal -->
 <div class="modal-overlay" id="qr-modal">
   <div class="modal">
-    <button class="modal-close" onclick="closeQRModal()">✕</button>
+    <button class="modal-close" onclick="closeModal()">✕</button>
     <div class="modal-title" id="modal-purse-name">—</div>
     <div class="modal-sub">Show this QR to receive payment</div>
     <div class="qr-container"><canvas id="qr-canvas" width="240" height="240"></canvas></div>
@@ -328,7 +329,7 @@
         <span class="qr-row-value" id="modal-id" style="font-family:monospace;font-size:11px;color:var(--slate)">—</span>
       </div>
     </div>
-    <div class="qr-note">ℹ️ This QR links buyers directly to the payment prompt.</div>
+    <div class="qr-note">ℹ️ This QR encodes your <strong>contract address</strong> — it never changes when you update the price.</div>
     <div class="modal-actions">
       <button class="btn btn-ghost btn-sm" onclick="downloadQR()">⬇ Download QR</button>
       <button class="btn btn-ghost btn-sm" onclick="copyContractAddr()">📋 Copy address</button>
@@ -336,17 +337,10 @@
   </div>
 </div>
 
-<!-- Payment Modal -->
-<div class="modal-overlay" id="pay-modal">
-  <div class="modal" style="max-width:400px">
-    <button class="modal-close" onclick="closePayModal()">✕</button>
-    <div id="pay-modal-content"></div>
-  </div>
-</div>
-
 <!-- Toast -->
 <div class="toast" id="toast"><div class="toast-dot"></div><span id="toast-text"></span></div>
 
+<!-- QR lib + ethers v6 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 
@@ -354,22 +348,26 @@
 // ═══════════════════════════════════════════════
 // CONFIG
 // ═══════════════════════════════════════════════
-const BOT_CHAIN_ID = 968;
-const BOT_RPC      = 'https://rpc.bohr.life';
-const EXPLORER     = 'https://scan.bohr.life';
+const BOT_CHAIN_ID   = 677;
+const BOT_RPC        = 'https://rpc.botchain.ai';   // update if different
+const EXPLORER       = 'https://scan.botchain.ai';
 
-const REGISTRY_ADDRESS = '0xC6031058f6fF4B35EC624a99F5d4027Ad025da84';
-const USDT             = '0x75edC9335175Fc0552D51D48439F229c10420fe3';
+// ── Deployed contract addresses ──────────────────
+// Replace REGISTRY_ADDRESS after you deploy PurseRegistry.sol
+const REGISTRY_ADDRESS = '0x55B904397bE83Cc5ea9Cba0A58B1FFa4F96770D2'; // TODO: replace after deploy
+
+// Your ERC-20 token
+const USDT  = '0x75edC9335175Fc0552D51D48439F229c10420fe3';
 
 // ── ABIs ────────────────────────────────────────
 const ERC20_ABI = [
-  { name:'balanceOf',   type:'function', stateMutability:'view',       inputs:[{name:'account',type:'address'}], outputs:[{type:'uint256'}] },
-  { name:'decimals',    type:'function', stateMutability:'view',       inputs:[], outputs:[{type:'uint8'}] },
-  { name:'symbol',      type:'function', stateMutability:'view',       inputs:[], outputs:[{type:'string'}] },
-  { name:'transfer',    type:'function', stateMutability:'nonpayable', inputs:[{name:'to',type:'address'},{name:'amount',type:'uint256'}], outputs:[{type:'bool'}] },
-  { name:'transferFrom',type:'function', stateMutability:'nonpayable', inputs:[{name:'from',type:'address'},{name:'to',type:'address'},{name:'amount',type:'uint256'}], outputs:[{type:'bool'}] },
-  { name:'approve',     type:'function', stateMutability:'nonpayable', inputs:[{name:'spender',type:'address'},{name:'amount',type:'uint256'}], outputs:[{type:'bool'}] },
-  { name:'allowance',   type:'function', stateMutability:'view',       inputs:[{name:'owner',type:'address'},{name:'spender',type:'address'}], outputs:[{type:'uint256'}] },
+  { name:'balanceOf',   type:'function', stateMutability:'view',        inputs:[{name:'account',type:'address'}],                                        outputs:[{type:'uint256'}] },
+  { name:'decimals',    type:'function', stateMutability:'view',        inputs:[],                                                                       outputs:[{type:'uint8'}]   },
+  { name:'symbol',      type:'function', stateMutability:'view',        inputs:[],                                                                       outputs:[{type:'string'}]  },
+  { name:'transfer',    type:'function', stateMutability:'nonpayable',  inputs:[{name:'to',type:'address'},{name:'amount',type:'uint256'}],               outputs:[{type:'bool'}]    },
+  { name:'transferFrom',type:'function', stateMutability:'nonpayable',  inputs:[{name:'from',type:'address'},{name:'to',type:'address'},{name:'amount',type:'uint256'}], outputs:[{type:'bool'}] },
+  { name:'approve',     type:'function', stateMutability:'nonpayable',  inputs:[{name:'spender',type:'address'},{name:'amount',type:'uint256'}],          outputs:[{type:'bool'}]    },
+  { name:'allowance',   type:'function', stateMutability:'view',        inputs:[{name:'owner',type:'address'},{name:'spender',type:'address'}],           outputs:[{type:'uint256'}] },
 ];
 
 const REGISTRY_ABI = [
@@ -382,19 +380,19 @@ const REGISTRY_ABI = [
 ];
 
 const PURSE_WALLET_ABI = [
-  { name:'pay',           type:'function', stateMutability:'payable',    inputs:[], outputs:[] },
+  { name:'pay',           type:'function', stateMutability:'payable',    inputs:[],                               outputs:[] },
   { name:'payERC20',      type:'function', stateMutability:'nonpayable', inputs:[{name:'amount',type:'uint256'}], outputs:[] },
   { name:'setPrice',      type:'function', stateMutability:'nonpayable', inputs:[{name:'newAmount',type:'uint256'}], outputs:[] },
-  { name:'withdraw',      type:'function', stateMutability:'nonpayable', inputs:[], outputs:[] },
+  { name:'withdraw',      type:'function', stateMutability:'nonpayable', inputs:[],                               outputs:[] },
   { name:'withdrawERC20', type:'function', stateMutability:'nonpayable', inputs:[{name:'token_',type:'address'}], outputs:[] },
-  { name:'owner',         type:'function', stateMutability:'view',       inputs:[], outputs:[{type:'address'}] },
-  { name:'currentPrice',  type:'function', stateMutability:'view',       inputs:[], outputs:[{type:'uint256'}] },
-  { name:'token',         type:'function', stateMutability:'view',       inputs:[], outputs:[{type:'address'}] },
-  { name:'name',          type:'function', stateMutability:'view',       inputs:[], outputs:[{type:'string'}] },
-  { name:'description',   type:'function', stateMutability:'view',       inputs:[], outputs:[{type:'string'}] },
-  { name:'totalReceived', type:'function', stateMutability:'view',       inputs:[], outputs:[{type:'uint256'}] },
-  { name:'paymentCount',  type:'function', stateMutability:'view',       inputs:[], outputs:[{type:'uint256'}] },
-  { name:'info',          type:'function', stateMutability:'view',       inputs:[], outputs:[{name:'owner_',type:'address'},{name:'name_',type:'string'},{name:'description_',type:'string'},{name:'price_',type:'uint256'},{name:'token_',type:'address'},{name:'totalReceived_',type:'uint256'},{name:'paymentCount_',type:'uint256'},{name:'ethBalance_',type:'uint256'}] },
+  { name:'owner',         type:'function', stateMutability:'view',       inputs:[],                               outputs:[{type:'address'}] },
+  { name:'currentPrice',  type:'function', stateMutability:'view',       inputs:[],                               outputs:[{type:'uint256'}] },
+  { name:'token',         type:'function', stateMutability:'view',       inputs:[],                               outputs:[{type:'address'}] },
+  { name:'name',          type:'function', stateMutability:'view',       inputs:[],                               outputs:[{type:'string'}]  },
+  { name:'description',   type:'function', stateMutability:'view',       inputs:[],                               outputs:[{type:'string'}]  },
+  { name:'totalReceived', type:'function', stateMutability:'view',       inputs:[],                               outputs:[{type:'uint256'}] },
+  { name:'paymentCount',  type:'function', stateMutability:'view',       inputs:[],                               outputs:[{type:'uint256'}] },
+  { name:'info',          type:'function', stateMutability:'view',       inputs:[],                               outputs:[{name:'owner_',type:'address'},{name:'name_',type:'string'},{name:'description_',type:'string'},{name:'price_',type:'uint256'},{name:'token_',type:'address'},{name:'totalReceived_',type:'uint256'},{name:'paymentCount_',type:'uint256'},{name:'ethBalance_',type:'uint256'}] },
 ];
 
 // ═══════════════════════════════════════════════
@@ -402,9 +400,8 @@ const PURSE_WALLET_ABI = [
 // ═══════════════════════════════════════════════
 let provider, signer, userAddress;
 let erc20Decimals = 18;
-let erc20Symbol   = 'USDT';
-let activeQRModal = null;
-window._currentPayPurse = null;
+let erc20Symbol   = 'BOT';
+let activeModal   = null;
 
 // ═══════════════════════════════════════════════
 // WALLET
@@ -413,42 +410,56 @@ async function connectWallet() {
   if (!window.ethereum) { toast('MetaMask not found — install it first', 'error'); return; }
   try {
     await window.ethereum.request({ method: 'eth_requestAccounts' });
-    provider    = new ethers.BrowserProvider(window.ethereum);
-    signer      = await provider.getSigner();
+    provider = new ethers.BrowserProvider(window.ethereum);
+    signer   = await provider.getSigner();
     userAddress = await signer.getAddress();
     updateWalletUI();
     await checkAndSwitchChain();
     await loadERC20Meta();
     toast('Wallet connected ✓', 'success');
-    genSalt();
-    // Re-render pay modal if open so Pay button appears
-    if (window._currentPayPurse) renderPayModal(window._currentPayPurse);
+    genSalt(); // generate salt once connected
   } catch(e) {
     toast('Connection cancelled', 'error');
   }
 }
 
 async function checkAndSwitchChain() {
-  const net     = await provider.getNetwork();
+  const net = await provider.getNetwork();
   const chainId = Number(net.chainId);
-  const badge   = document.getElementById('chain-badge');
+  const badge = document.getElementById('chain-badge');
   badge.style.display = 'inline-block';
+
   if (chainId === BOT_CHAIN_ID) {
-    badge.textContent = 'BOT Chain'; badge.className = 'chain-ok';
+    badge.textContent = 'BOT Chain';
+    badge.className = 'chain-ok';
   } else {
-    badge.textContent = `Wrong chain (${chainId})`; badge.className = 'chain-wrong';
+    badge.textContent = `Wrong chain (${chainId})`;
+    badge.className = 'chain-wrong';
     try {
-      await window.ethereum.request({ method:'wallet_switchEthereumChain', params:[{ chainId:'0x' + BOT_CHAIN_ID.toString(16) }] });
-      badge.textContent = 'BOT Chain'; badge.className = 'chain-ok';
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0x' + BOT_CHAIN_ID.toString(16) }],
+      });
+      badge.textContent = 'BOT Chain';
+      badge.className = 'chain-ok';
     } catch(e) {
+      // Chain not added — prompt user to add it
       try {
-        await window.ethereum.request({ method:'wallet_addEthereumChain', params:[{
-          chainId:'0x' + BOT_CHAIN_ID.toString(16), chainName:'BOT Chain',
-          nativeCurrency:{ name:'BOT', symbol:'BOT', decimals:18 },
-          rpcUrls:[BOT_RPC], blockExplorerUrls:[EXPLORER],
-        }]});
-        badge.textContent = 'BOT Chain'; badge.className = 'chain-ok';
-      } catch(e2) { toast('Please switch to BOT Chain manually', 'error'); }
+        await window.ethereum.request({
+          method: 'wallet_addEthereumChain',
+          params: [{
+            chainId: '0x' + BOT_CHAIN_ID.toString(16),
+            chainName: 'BOT Chain',
+            nativeCurrency: { name:'BOT', symbol:'BOT', decimals:18 },
+            rpcUrls: [BOT_RPC],
+            blockExplorerUrls: [EXPLORER],
+          }],
+        });
+        badge.textContent = 'BOT Chain';
+        badge.className = 'chain-ok';
+      } catch(e2) {
+        toast('Please switch to BOT Chain manually', 'error');
+      }
     }
   }
 }
@@ -471,7 +482,10 @@ function disconnectWallet() {
   document.getElementById('chain-badge').style.display = 'none';
 }
 
-window.ethereum?.on('accountsChanged', accs => { if (!accs.length) disconnectWallet(); else connectWallet(); });
+window.ethereum?.on('accountsChanged', (accs) => {
+  if (!accs.length) disconnectWallet();
+  else connectWallet();
+});
 window.ethereum?.on('chainChanged', () => location.reload());
 
 async function loadERC20Meta() {
@@ -495,7 +509,7 @@ function showScreen(id, btn) {
 }
 
 // ═══════════════════════════════════════════════
-// SALT
+// SALT / PREDICTED ADDRESS
 // ═══════════════════════════════════════════════
 function genSalt() {
   const raw = crypto.getRandomValues(new Uint8Array(32));
@@ -506,7 +520,10 @@ function genSalt() {
 
 async function updatePredictedAddress() {
   const saltVal = document.getElementById('purse-salt').value;
-  if (!userAddress || !saltVal) { document.getElementById('predicted-address-row').style.display = 'none'; return; }
+  if (!userAddress || !saltVal || REGISTRY_ADDRESS === '0x0000000000000000000000000000000000000000') {
+    document.getElementById('predicted-address-row').style.display = 'none';
+    return;
+  }
   try {
     const rp  = new ethers.JsonRpcProvider(BOT_RPC);
     const reg = new ethers.Contract(REGISTRY_ADDRESS, REGISTRY_ABI, rp);
@@ -533,8 +550,8 @@ function onTokenChange() {
     hint.textContent = 'Payment in native BOT gas token';
     sym.setAttribute('data-symbol', 'Ξ');
   } else {
-    hint.textContent = `Payment in ${erc20Symbol} (ERC-20)`;
-    sym.setAttribute('data-symbol', '$');
+    hint.textContent = `Payment in ${erc20Symbol} (${USDT.slice(0,8)}…)`;
+    sym.setAttribute('data-symbol', '');
   }
 }
 
@@ -543,6 +560,9 @@ function onTokenChange() {
 // ═══════════════════════════════════════════════
 async function createPurse() {
   if (!signer) { toast('Connect your wallet first', 'error'); return; }
+  if (REGISTRY_ADDRESS === '0x0000000000000000000000000000000000000000') {
+    toast('Deploy PurseRegistry.sol first and update REGISTRY_ADDRESS', 'error'); return;
+  }
 
   const name    = document.getElementById('purse-name').value.trim();
   const desc    = document.getElementById('purse-desc').value.trim();
@@ -550,9 +570,12 @@ async function createPurse() {
   const isERC20 = document.getElementById('purse-token').value === 'erc20';
   const saltRaw = document.getElementById('purse-salt').value.trim();
 
+  // Validate salt
   if (!saltRaw || saltRaw.length !== 66 || !saltRaw.startsWith('0x')) {
     toast('Invalid salt — click ↻ New to regenerate', 'error'); return;
   }
+  const salt = saltRaw; // genSalt() already produces valid bytes32
+
   if (!name)   { toast('Give your purse a name', 'error'); return; }
   if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
     toast('Enter a valid price', 'error'); return;
@@ -564,7 +587,9 @@ async function createPurse() {
   let amountWei;
   try {
     amountWei = ethers.parseUnits(amount, decimals);
-  } catch(e) { toast('Invalid price format', 'error'); return; }
+  } catch(e) {
+    toast('Invalid price format', 'error'); return;
+  }
   if (amountWei === 0n) { toast('Amount rounds to zero — use a larger value', 'error'); return; }
 
   const btn      = document.getElementById('create-btn');
@@ -575,12 +600,15 @@ async function createPurse() {
 
   try {
     const registry = new ethers.Contract(REGISTRY_ADDRESS, REGISTRY_ABI, signer);
-    console.log('createPurse args:', { name, desc, amountWei: amountWei.toString(), tokenAddr, salt: saltRaw });
-    const tx = await registry.createPurse(name, desc, amountWei, tokenAddr, saltRaw);
+
+    console.log('Calling createPurse with:', { name, desc, amountWei: amountWei.toString(), tokenAddr, salt });
+
+    const tx = await registry.createPurse(name, desc, amountWei, tokenAddr, salt);
     setTxStatus(statusEl, 'pending', 'Transaction sent — waiting for confirmation…', tx.hash);
 
     const receipt = await tx.wait();
-    const iface   = new ethers.Interface(REGISTRY_ABI);
+
+    const iface = new ethers.Interface(REGISTRY_ABI);
     let purseAddr = null;
     for (const log of receipt.logs) {
       try {
@@ -605,7 +633,12 @@ async function createPurse() {
   } catch(e) {
     let msg = e?.reason || e?.shortMessage || e?.message || 'Transaction failed';
     if (e?.data && e.data !== '0x') {
-      const iface = new ethers.Interface(['error ZeroPrice()','error DeployFailed()','error PurseAlreadyExists(bytes32)','error AlreadyInitialized()']);
+      const iface = new ethers.Interface([
+        'error ZeroPrice()',
+        'error DeployFailed()',
+        'error PurseAlreadyExists(bytes32)',
+        'error AlreadyInitialized()',
+      ]);
       try { msg = iface.parseError(e.data)?.name || msg; } catch(_) {}
     }
     console.error('createPurse error:', e);
@@ -616,7 +649,6 @@ async function createPurse() {
     btn.textContent = 'Deploy purse on BOT Chain →';
   }
 }
-
 // ═══════════════════════════════════════════════
 // DASHBOARD
 // ═══════════════════════════════════════════════
@@ -628,12 +660,20 @@ async function refreshDashboard() {
         <h3>Connect your wallet</h3>
         <p>Connect MetaMask to see your on-chain purses.</p>
         <button class="btn btn-primary" onclick="connectWallet()">Connect Wallet</button>
-      </div>`; return;
+      </div>`;
+    return;
   }
+  if (REGISTRY_ADDRESS === '0x0000000000000000000000000000000000000000') {
+    document.getElementById('purse-list').innerHTML = `<div class="empty-state"><div class="empty-icon">⚙️</div><h3>Registry not deployed</h3><p>Set REGISTRY_ADDRESS after deploying PurseRegistry.sol.</p></div>`;
+    return;
+  }
+
   document.getElementById('purse-list').innerHTML = `<div class="empty-state"><div class="spinner" style="width:24px;height:24px;margin:0 auto 12px"></div><p>Loading on-chain purses…</p></div>`;
+
   try {
-    const rp   = new ethers.JsonRpcProvider(BOT_RPC);
-    const reg  = new ethers.Contract(REGISTRY_ADDRESS, REGISTRY_ABI, rp);
+    const rp  = new ethers.JsonRpcProvider(BOT_RPC);
+    const reg = new ethers.Contract(REGISTRY_ADDRESS, REGISTRY_ABI, rp);
+
     const addrs = await reg.pursesOf(userAddress);
     if (!addrs.length) {
       document.getElementById('purse-list').innerHTML = `
@@ -642,10 +682,13 @@ async function refreshDashboard() {
           <h3>No purses yet</h3>
           <p>Deploy your first purse to start accepting payments.</p>
           <button class="btn btn-primary" onclick="showScreen('create',document.querySelector('nav button:nth-child(2)'))">Create a purse</button>
-        </div>`; return;
+        </div>`;
+      return;
     }
+
     const info = await reg.batchInfo(addrs);
     renderDashboard(addrs, info);
+
   } catch(e) {
     document.getElementById('purse-list').innerHTML = `<div class="empty-state"><div class="empty-icon">❌</div><h3>Failed to load</h3><p>${e.message}</p></div>`;
   }
@@ -654,12 +697,13 @@ async function refreshDashboard() {
 function renderDashboard(addrs, info) {
   const list = document.getElementById('purse-list');
   list.innerHTML = addrs.map((addr, i) => {
-    const isERC20   = info.tokens[i] !== ethers.ZeroAddress;
-    const decimals  = isERC20 ? erc20Decimals : 18;
-    const symbol    = isERC20 ? erc20Symbol   : 'BOT';
-    const price     = ethers.formatUnits(info.prices[i], decimals);
-    const total     = ethers.formatUnits(info.totals[i], decimals);
+    const isERC20  = info.tokens[i] !== ethers.ZeroAddress;
+    const decimals = isERC20 ? erc20Decimals : 18;
+    const symbol   = isERC20 ? erc20Symbol   : 'BOT';
+    const price    = ethers.formatUnits(info.prices[i], decimals);
+    const total    = ethers.formatUnits(info.totals[i], decimals);
     const shortAddr = addr.slice(0,8) + '…' + addr.slice(-6);
+
     return `
     <div class="purse-card" id="card-${addr}">
       <div class="purse-card-header">
@@ -681,6 +725,7 @@ function renderDashboard(addrs, info) {
         <div style="font-size:12px;color:var(--slate);margin-bottom:16px">
           ${info.counts[i].toString()} payments · ${parseFloat(total).toLocaleString('en',{maximumFractionDigits:6})} ${symbol} total received
         </div>
+
         <div class="price-edit-row" id="price-edit-${addr}" style="display:none">
           <input type="number" id="edit-input-${addr}" value="${price}" min="0" step="any" placeholder="New price…"
             onkeydown="if(event.key==='Enter')savePrice('${addr}','${symbol}',${isERC20},${decimals})">
@@ -688,6 +733,7 @@ function renderDashboard(addrs, info) {
           <button class="btn btn-ghost btn-sm" onclick="cancelEdit('${addr}')">✕</button>
         </div>
         <div id="price-tx-${addr}"></div>
+
         <div class="purse-actions">
           <button class="btn btn-primary btn-sm" onclick="openQRByAddress('${addr}')">📱 Show QR</button>
           <button class="btn btn-ghost btn-sm" onclick="startEdit('${addr}')">✏ Edit price</button>
@@ -716,15 +762,19 @@ async function savePrice(addr, symbol, isERC20, decimals) {
   if (!signer) { toast('Connect wallet', 'error'); return; }
   const val = document.getElementById('edit-input-' + addr).value;
   if (!val || parseFloat(val) <= 0) { toast('Enter a valid price', 'error'); return; }
+
   const amountWei = ethers.parseUnits(val, decimals);
   const statusEl  = document.getElementById('price-tx-' + addr);
   setTxStatus(statusEl, 'pending', 'Confirm in wallet…');
+
   try {
     const purse = new ethers.Contract(addr, PURSE_WALLET_ABI, signer);
     const tx    = await purse.setPrice(amountWei);
     setTxStatus(statusEl, 'pending', 'Updating price on-chain…', tx.hash);
     await tx.wait();
-    document.getElementById('price-val-' + addr).textContent = parseFloat(val).toLocaleString('en', { maximumFractionDigits: 6 });
+
+    document.getElementById('price-val-' + addr).textContent =
+      parseFloat(val).toLocaleString('en', { maximumFractionDigits: 6 });
     cancelEdit(addr);
     setTxStatus(statusEl, 'success', 'Price updated — QR code unchanged ✓', tx.hash);
     toast('Price updated on-chain ✓', 'success');
@@ -742,7 +792,9 @@ async function withdrawPurse(addr, isERC20) {
   setTxStatus(statusEl, 'pending', 'Confirm withdrawal in wallet…');
   try {
     const purse = new ethers.Contract(addr, PURSE_WALLET_ABI, signer);
-    const tx    = isERC20 ? await purse.withdrawERC20(USDT) : await purse.withdraw();
+    const tx    = isERC20
+      ? await purse.withdrawERC20(USDT)
+      : await purse.withdraw();
     setTxStatus(statusEl, 'pending', 'Withdrawing…', tx.hash);
     await tx.wait();
     setTxStatus(statusEl, 'success', 'Withdrawn to your wallet ✓', tx.hash);
@@ -757,14 +809,14 @@ async function withdrawPurse(addr, isERC20) {
 // QR MODAL
 // ═══════════════════════════════════════════════
 async function openQRByAddress(addr) {
-  activeQRModal = { address: addr };
+  activeModal = { address: addr };
   document.getElementById('modal-purse-name').textContent = 'Loading…';
   document.getElementById('modal-amount').textContent     = '—';
   document.getElementById('modal-token').textContent      = '—';
   document.getElementById('modal-id').textContent         = addr;
   document.getElementById('qr-modal').classList.add('open');
 
-  // QR encodes a payment URL so buyers land on the pay modal
+  // Render QR immediately with the address
   const payUrl = `${window.location.origin}${window.location.pathname}?pay=${addr}`;
   renderQR(payUrl);
 
@@ -772,31 +824,36 @@ async function openQRByAddress(addr) {
     const rp    = new ethers.JsonRpcProvider(BOT_RPC);
     const purse = new ethers.Contract(addr, PURSE_WALLET_ABI, rp);
     const data  = await purse.info();
+
     const isERC20  = data.token_ !== ethers.ZeroAddress;
     const decimals = isERC20 ? erc20Decimals : 18;
     const symbol   = isERC20 ? erc20Symbol   : 'BOT';
     const price    = ethers.formatUnits(data.price_, decimals);
-    activeQRModal  = { address: addr, name: data.name_, isERC20, decimals, symbol, price };
+
+    activeModal = { address: addr, name: data.name_, isERC20, decimals, symbol, price };
+
     document.getElementById('modal-purse-name').textContent = data.name_;
     document.getElementById('modal-amount').textContent     = `${parseFloat(price).toLocaleString('en',{maximumFractionDigits:6})} ${symbol}`;
-    document.getElementById('modal-token').textContent      = isERC20 ? `${symbol} (ERC-20)` : 'BOT (native)';
+    document.getElementById('modal-token').textContent      = isERC20 ? `${symbol} (${USDT.slice(0,8)}…)` : 'BOT (native)';
   } catch(e) {
     document.getElementById('modal-purse-name').textContent = 'Purse';
   }
 }
 
-function closeQRModal() {
+function closeModal() {
   document.getElementById('qr-modal').classList.remove('open');
-  activeQRModal = null;
+  activeModal = null;
 }
 
 function renderQR(text) {
   const canvas = document.getElementById('qr-canvas');
   const ctx    = canvas.getContext('2d');
   ctx.clearRect(0, 0, 240, 240);
+
   const tmp = document.createElement('div');
   tmp.style.cssText = 'position:absolute;left:-9999px';
   document.body.appendChild(tmp);
+
   try {
     new QRCode(tmp, { text, width:240, height:240, colorDark:'#000', colorLight:'#fff', correctLevel:QRCode.CorrectLevel.H });
     setTimeout(() => {
@@ -812,139 +869,112 @@ function renderQR(text) {
 }
 
 function downloadQR() {
-  if (!activeQRModal) return;
+  if (!activeModal) return;
   const a = document.createElement('a');
-  a.download = `pursepay-${(activeQRModal.name||activeQRModal.address).replace(/\s+/g,'-')}.png`;
+  a.download = `pursepay-${(activeModal.name||activeModal.address).replace(/\s+/g,'-')}.png`;
   a.href = document.getElementById('qr-canvas').toDataURL('image/png');
   a.click();
   toast('QR downloaded', 'success');
 }
 
 function copyContractAddr() {
-  if (!activeQRModal?.address) return;
-  navigator.clipboard.writeText(activeQRModal.address).then(() => toast('Contract address copied ✓', 'success'));
+  if (!activeModal?.address) return;
+  navigator.clipboard.writeText(activeModal.address).then(() => toast('Contract address copied ✓', 'success'));
 }
 
-document.getElementById('qr-modal').addEventListener('click', function(e) { if (e.target===this) closeQRModal(); });
+document.getElementById('qr-modal').addEventListener('click', function(e) { if (e.target===this) closeModal(); });
 
 // ═══════════════════════════════════════════════
-// PAYMENT MODAL
+// SCAN & PAY
 // ═══════════════════════════════════════════════
 async function lookupPurse() {
-  const input = document.getElementById('scan-input').value.trim();
-  if (!ethers.isAddress(input)) { toast('Enter a valid 0x contract address', 'error'); return; }
+  const input  = document.getElementById('scan-input').value.trim();
+  const result = document.getElementById('pay-result');
+  result.innerHTML = `<div class="scan-card"><div class="spinner" style="width:24px;height:24px;margin:0 auto 12px"></div><p style="color:var(--slate)">Looking up purse…</p></div>`;
+  result.style.display = 'block';
 
-  document.getElementById('pay-modal-content').innerHTML = `
-    <div style="text-align:center;padding:20px">
-      <div class="spinner" style="width:28px;height:28px;margin:0 auto 16px"></div>
-      <p style="color:var(--slate)">Loading purse…</p>
-    </div>`;
-  document.getElementById('pay-modal').classList.add('open');
+  if (!ethers.isAddress(input)) {
+    result.innerHTML = `<div class="scan-card"><div class="scan-icon">❌</div><h3 style="font-size:16px;margin-bottom:8px">Invalid address</h3><p style="color:var(--slate);font-size:13px">Enter a valid 0x contract address.</p></div>`;
+    return;
+  }
 
   try {
-    const rp = new ethers.JsonRpcProvider(BOT_RPC);
+    const rp  = new ethers.JsonRpcProvider(BOT_RPC);
 
-    if (REGISTRY_ADDRESS) {
-      try {
-        const reg   = new ethers.Contract(REGISTRY_ADDRESS, REGISTRY_ABI, rp);
-        const valid = await reg.isPurse(input);
-        if (!valid) {
-          document.getElementById('pay-modal-content').innerHTML = `
-            <div style="text-align:center;padding:20px">
-              <div style="font-size:40px;margin-bottom:12px">⚠️</div>
-              <h3 style="margin-bottom:8px">Not a PursePay purse</h3>
-              <p style="color:var(--slate);font-size:13px">This address is not registered.</p>
-            </div>`; return;
-        }
-      } catch(e) { /* proceed anyway */ }
+    // Optionally verify it's a known purse
+   if (REGISTRY_ADDRESS !== '0x0000000000000000000000000000000000000000') {
+  try {
+    const reg = new ethers.Contract(REGISTRY_ADDRESS, REGISTRY_ABI, rp);
+    const valid = await reg.isPurse(input);
+    if (!valid) {
+      result.innerHTML = `<div class="scan-card"><div class="scan-icon">⚠️</div><h3 style="font-size:16px;margin-bottom:8px">Not a PursePay purse</h3><p style="color:var(--slate);font-size:13px">This address is not registered in PurseRegistry.</p></div>`;
+      return;
     }
-
-    const purse = new ethers.Contract(input, PURSE_WALLET_ABI, rp);
-    const data  = await purse.info();
-    const isERC20     = data.token_ !== ethers.ZeroAddress;
-    const decimals    = isERC20 ? erc20Decimals : 18;
-    const symbol      = isERC20 ? erc20Symbol   : 'BOT';
-    const price       = ethers.formatUnits(data.price_, decimals);
-    const priceWeiStr = data.price_.toString();
-
-    renderPayModal({ address:input, name:data.name_, description:data.description_, price, symbol, isERC20, decimals, priceWeiStr });
-
   } catch(e) {
-    document.getElementById('pay-modal-content').innerHTML = `
-      <div style="text-align:center;padding:20px">
-        <div style="font-size:40px;margin-bottom:12px">❌</div>
-        <h3 style="margin-bottom:8px">Not found</h3>
-        <p style="color:var(--slate);font-size:13px">${esc(e.message)}</p>
-      </div>`;
+    // registry check failed — proceed anyway and let the wallet call fail if invalid
   }
 }
 
-function renderPayModal(purse) {
-  window._currentPayPurse = purse;
-  const fmt = n => parseFloat(n).toLocaleString('en', { maximumFractionDigits: 6 });
+    const purse = new ethers.Contract(input, PURSE_WALLET_ABI, rp);
+    const data  = await purse.info();
 
-  document.getElementById('pay-modal-content').innerHTML = `
-    <div style="text-align:center">
-      <div style="font-size:13px;color:var(--slate);margin-bottom:6px">Payment to</div>
-      <div style="font-size:22px;font-weight:700;margin-bottom:4px">${esc(purse.name)}</div>
-      ${purse.description ? `<div style="font-size:13px;color:var(--slate);margin-bottom:16px">${esc(purse.description)}</div>` : '<div style="margin-bottom:16px"></div>'}
-      <div style="font-size:44px;font-weight:800;letter-spacing:-1px;color:var(--mint);line-height:1">${fmt(purse.price)}</div>
-      <div style="color:var(--slate);font-size:14px;margin-bottom:24px">${purse.symbol}</div>
+    const isERC20  = data.token_ !== ethers.ZeroAddress;
+    const decimals = isERC20 ? erc20Decimals : 18;
+    const symbol   = isERC20 ? erc20Symbol   : 'BOT';
+    const price    = ethers.formatUnits(data.price_, decimals);
 
-      <div style="background:var(--navy-2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:20px;text-align:left">
-        <div style="font-size:11px;color:var(--slate);margin-bottom:3px">Purse contract</div>
-        <div style="font-family:monospace;font-size:10px;word-break:break-all">${purse.address}</div>
+    showPayPage({ address: input, name: data.name_, description: data.description_, price, symbol, isERC20, decimals, priceWei: data.price_ }, result);
+
+  } catch(e) {
+    result.innerHTML = `<div class="scan-card"><div class="scan-icon">❌</div><h3 style="font-size:16px;margin-bottom:8px">Not found</h3><p style="color:var(--slate);font-size:13px">${e.message}</p></div>`;
+  }
+}
+
+function showPayPage(purse, container) {
+  const priceWeiStr = purse.priceWei.toString();
+  container.innerHTML = `
+    <div class="scan-card">
+      <div style="color:var(--slate);font-size:13px;margin-bottom:8px">Payment to</div>
+      <div style="font-size:20px;font-weight:700;margin-bottom:4px">${esc(purse.name)}</div>
+      ${purse.description ? `<div style="color:var(--slate);font-size:13px;margin-bottom:16px">${esc(purse.description)}</div>` : '<div style="margin-bottom:16px"></div>'}
+      <div style="font-size:38px;font-weight:800;letter-spacing:-1px;color:var(--mint);margin-bottom:4px">
+        ${parseFloat(purse.price).toLocaleString('en',{maximumFractionDigits:6})}
+      </div>
+      <div style="color:var(--slate);font-size:13px;margin-bottom:20px">${purse.symbol}</div>
+      <div style="background:var(--navy-2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:16px;text-align:left">
+        <div style="font-size:12px;color:var(--slate);margin-bottom:4px">Purse contract</div>
+        <div style="font-family:monospace;font-size:11px;word-break:break-all;font-weight:500">${purse.address}</div>
       </div>
 
-      ${!signer ? `
-        <div style="background:var(--indigo-dim);border:1px solid rgba(99,102,241,.2);border-radius:10px;padding:12px;margin-bottom:16px;font-size:13px;color:var(--indigo-light)">
-          Connect your wallet to pay
-        </div>
-        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="connectWallet()">
-          Connect Wallet
-        </button>` : ''}
-
-      ${signer && purse.isERC20 ? `
+      ${purse.isERC20 ? `
         <div class="approve-row" id="approve-row-${purse.address}">
-          <p>Step 1 — Approve the purse to spend your ${purse.symbol}</p>
-          <button class="btn btn-amber btn-sm" onclick="approveToken('${purse.address}','${purse.priceWeiStr}')">
-            Approve ${fmt(purse.price)} ${purse.symbol}
+          <p>Step 1: Approve the purse to spend your ${purse.symbol}</p>
+          <button class="btn btn-amber btn-sm" onclick="approveToken('${purse.address}','${priceWeiStr}')">
+            Approve ${parseFloat(purse.price).toLocaleString('en',{maximumFractionDigits:6})} ${purse.symbol}
           </button>
         </div>
-        <div style="font-size:12px;color:var(--slate);margin-bottom:12px;text-align:center">Then confirm payment below</div>` : ''}
+        <div style="font-size:12px;color:var(--slate);margin-bottom:12px;text-align:center">
+          Step 2: Confirm payment after approval
+        </div>` : ''}
 
-      ${signer ? `
-        <button class="btn btn-success" style="width:100%;justify-content:center;margin-top:4px"
-          id="pay-btn-${purse.address}"
-          onclick="executePayment('${purse.address}','${purse.priceWeiStr}',${purse.isERC20})">
-          Pay ${fmt(purse.price)} ${purse.symbol}
-        </button>` : ''}
-
-      <div id="pay-tx-${purse.address}" style="margin-top:8px"></div>
+      <button class="btn btn-success" style="width:100%;justify-content:center" id="pay-btn-${purse.address}"
+        onclick="executePayment('${purse.address}','${priceWeiStr}',${purse.isERC20})">
+        Pay ${parseFloat(purse.price).toLocaleString('en',{maximumFractionDigits:6})} ${purse.symbol}
+      </button>
+      <div id="pay-tx-${purse.address}"></div>
     </div>`;
 }
-
-function closePayModal() {
-  document.getElementById('pay-modal').classList.remove('open');
-  window._currentPayPurse = null;
-}
-
-document.getElementById('pay-modal').addEventListener('click', function(e) { if (e.target===this) closePayModal(); });
-
-// ═══════════════════════════════════════════════
-// APPROVE + PAY
-// ═══════════════════════════════════════════════
 async function approveToken(purseAddr, priceWeiStr) {
   const priceWei = BigInt(priceWeiStr);
   if (!signer) { toast('Connect wallet first', 'error'); return; }
   const statusEl = document.getElementById('pay-tx-' + purseAddr);
-  setTxStatus(statusEl, 'pending', 'Approving — confirm in wallet…');
+  setTxStatus(statusEl, 'pending', 'Approving token spend…');
   try {
     const token = new ethers.Contract(USDT, ERC20_ABI, signer);
     const tx    = await token.approve(purseAddr, priceWei);
-    setTxStatus(statusEl, 'pending', 'Waiting for approval…', tx.hash);
+    setTxStatus(statusEl, 'pending', 'Waiting for approval confirmation…', tx.hash);
     await tx.wait();
-    setTxStatus(statusEl, 'success', 'Approved ✓ — now tap Pay', tx.hash);
+    setTxStatus(statusEl, 'success', 'Approved ✓ — you can now pay', tx.hash);
     const row = document.getElementById('approve-row-' + purseAddr);
     if (row) row.style.display = 'none';
     toast('Approval confirmed ✓', 'success');
@@ -960,22 +990,22 @@ async function executePayment(purseAddr, priceWeiStr, isERC20) {
   const statusEl = document.getElementById('pay-tx-' + purseAddr);
   if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
   setTxStatus(statusEl, 'pending', 'Confirm payment in wallet…');
+
   try {
     const purse = new ethers.Contract(purseAddr, PURSE_WALLET_ABI, signer);
-    const tx    = isERC20
+    const tx = isERC20
       ? await purse.payERC20(priceWei)
       : await purse.pay({ value: priceWei });
-    setTxStatus(statusEl, 'pending', 'Confirming on-chain…', tx.hash);
+    setTxStatus(statusEl, 'pending', 'Payment sent — confirming on-chain…', tx.hash);
     await tx.wait();
-    setTxStatus(statusEl, 'success', 'Payment confirmed! 🎉', tx.hash);
+    setTxStatus(statusEl, 'success', 'Payment confirmed on-chain! 🎉', tx.hash);
     toast('Payment confirmed on BOT Chain ✓', 'success');
-    if (btn) { btn.textContent = 'Paid ✓'; btn.disabled = true; }
+    if (btn) { btn.textContent = 'Paid ✓'; }
   } catch(e) {
     setTxStatus(statusEl, 'error', e?.reason || e?.shortMessage || 'Payment failed');
-    if (btn) { btn.disabled = false; btn.textContent = 'Retry'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Retry payment'; }
   }
 }
-
 // ═══════════════════════════════════════════════
 // TX STATUS HELPER
 // ═══════════════════════════════════════════════
@@ -1002,21 +1032,33 @@ function toast(msg, type = 'success') {
   el._t = setTimeout(() => el.classList.remove('show'), 3500);
 }
 
-// ═══════════════════════════════════════════════
-// DEEP LINK — ?pay=0x...
-// ═══════════════════════════════════════════════
+// ── URL pay deep link ──
+// ── URL pay deep link ──
 function handlePayDeepLink() {
   const addr = new URLSearchParams(window.location.search).get('pay');
   if (!addr) return;
+
+  // Wait for ethers to be ready
   const tryLoad = () => {
-    if (typeof ethers === 'undefined' || !ethers.isAddress) { setTimeout(tryLoad, 100); return; }
-    if (!ethers.isAddress(addr)) { toast('Invalid purse address in QR', 'error'); return; }
+    if (typeof ethers === 'undefined' || !ethers.isAddress) {
+      setTimeout(tryLoad, 100);
+      return;
+    }
+    if (!ethers.isAddress(addr)) {
+      toast('Invalid purse address in QR', 'error');
+      return;
+    }
+    // Show scan screen
+    showScreen('scan', document.querySelector('nav button:nth-child(4)'));
     document.getElementById('scan-input').value = addr;
+
+    // Auto-lookup immediately — no wallet needed to view purse info
     lookupPurse();
   };
   tryLoad();
 }
 
+// Run after DOM is ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', handlePayDeepLink);
 } else {
