@@ -339,7 +339,13 @@
 
 <!-- Toast -->
 <div class="toast" id="toast"><div class="toast-dot"></div><span id="toast-text"></span></div>
-
+<footer style="text-align:center; padding:20px 32px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; background:var(--navy);">
+  <span style="font-size:12px; color:var(--slate);">PursePay · BOT Chain (677)</span>
+  <div style="display:flex; gap:20px; font-size:12px;">
+    <a href="https://botchain.ai" target="_blank" rel="noopener noreferrer" style="color:var(--indigo-light); text-decoration:none;">BOT Chain</a>
+    <a href="https://scan.botchain.ai" target="_blank" rel="noopener noreferrer" style="color:var(--indigo-light); text-decoration:none;">Explorer</a>
+  </div>
+</footer>
 <!-- QR lib + ethers v6 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
@@ -1065,5 +1071,6 @@ if (document.readyState === 'loading') {
   handlePayDeepLink();
 }
 </script>
+
 </body>
 </html>
