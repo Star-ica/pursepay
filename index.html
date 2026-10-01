@@ -360,7 +360,7 @@ const EXPLORER       = 'https://scan.botchain.ai';
 
 // ── Deployed contract addresses ──────────────────
 // Replace REGISTRY_ADDRESS after you deploy PurseRegistry.sol
-const REGISTRY_ADDRESS = '0xca912d691d2c20B3de8D1baEBF1ee4131f4cF7d8'; // TODO: replace after deploy
+const REGISTRY_ADDRESS = '0x55B904397bE83Cc5ea9Cba0A58B1FFa4F96770D2'; // TODO: replace after deploy
 
 // Your ERC-20 token
 const USDT  = '0xaBabc7Ddc03e501d190C676BF3d92ef0e6e87a3C';
@@ -430,42 +430,46 @@ async function connectWallet() {
 }
 
 async function checkAndSwitchChain() {
+  const net = await provider.getNetwork();
+  const chainId = Number(net.chainId);
   const badge = document.getElementById('chain-badge');
   badge.style.display = 'inline-block';
-  const hexId = '0x' + BOT_CHAIN_ID.toString(16);
 
-  const current = await window.ethereum.request({ method: 'eth_chainId' });
-  if (current !== hexId) {
+  if (chainId === BOT_CHAIN_ID) {
+    badge.textContent = 'BOT Chain';
+    badge.className = 'chain-ok';
+  } else {
+    badge.textContent = `Wrong chain (${chainId})`;
+    badge.className = 'chain-wrong';
     try {
-      await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: hexId }] });
-    } catch (e) {
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0x' + BOT_CHAIN_ID.toString(16) }],
+      });
+      badge.textContent = 'BOT Chain';
+      badge.className = 'chain-ok';
+    } catch(e) {
+      // Chain not added — prompt user to add it
       try {
         await window.ethereum.request({
           method: 'wallet_addEthereumChain',
-          params: [{ chainId: hexId, chainName: 'BOT Chain',
-            nativeCurrency: { name: 'BOT', symbol: 'BOT', decimals: 18 },
-            rpcUrls: [BOT_RPC], blockExplorerUrls: [EXPLORER] }],
+          params: [{
+            chainId: '0x' + BOT_CHAIN_ID.toString(16),
+            chainName: 'BOT Chain',
+            nativeCurrency: { name:'BOT', symbol:'BOT', decimals:18 },
+            rpcUrls: [BOT_RPC],
+            blockExplorerUrls: [EXPLORER],
+          }],
         });
-      } catch (e2) { /* fall through */ }
+        badge.textContent = 'BOT Chain';
+        badge.className = 'chain-ok';
+      } catch(e2) {
+        toast('Please switch to BOT Chain manually', 'error');
+      }
     }
   }
-
-  const after = await window.ethereum.request({ method: 'eth_chainId' });
-  const ok = after === hexId;
-  badge.textContent = ok ? 'BOT Chain' : `Wrong chain (${parseInt(after, 16)})`;
-  badge.className = ok ? 'chain-ok' : 'chain-wrong';
-  if (ok) {                       // fresh provider/signer bound to the right network
-    provider = new ethers.BrowserProvider(window.ethereum);
-    signer = await provider.getSigner();
-  }
-  return ok;
 }
 
-async function requireBotChain() {
-  if (!signer) { toast('Connect your wallet first', 'error'); return false; }
-  if (!(await checkAndSwitchChain())) { toast('Switch to BOT Chain to continue', 'error'); return false; }
-  return true;
-}
 function updateWalletUI() {
   if (!userAddress) return;
   const short = userAddress.slice(0,6) + '…' + userAddress.slice(-4);
